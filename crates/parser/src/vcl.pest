@@ -76,24 +76,22 @@ sub_body_statements = { statements }
 table_declaration = { "table" ~ table_ident ~ table_type? ~ table_body }
 table_ident       = { ident }
 table_type        = { type }
-table_body        = { "{" ~ table_entry* ~ "}" }
-table_entry       = { table_key ~ ":" ~ table_value ~ ";" }
+table_body        = { "{" ~ (table_entry ~ ("," ~ table_entry)*)? ~ "}" }
+table_entry       = { table_key ~ ":" ~ table_value }
 table_key         = { string }
 table_value       = { expression }
 
 // https://developer.fastly.com/reference/vcl/types/string/
 // https://www.varnish-software.com/developers/tutorials/varnish-configuration-language-vcl/#strings
-string                     =  { empty_string | heredoc_string | braces_quoted_string | triple_quoted_string | quoted_string }
-empty_string               =  { "{\"\"}" | "\"\"\"\"\"\"" | "\"\"" }
+// Triple-quoted strings are not supported by Fastly
+string                     =  { empty_string | heredoc_string | braces_quoted_string | quoted_string }
+empty_string               =  { "{" ~ PUSH(ANY*) ~ "\"\"" ~ POP ~ "}" | "{\"\"}" | "\"\"" }
 heredoc_string             =  { "{" ~ PUSH(ANY*) ~ "\"" ~ heredoc_string_inner ~ "\"" ~ POP ~ "}" }
 heredoc_string_inner       = @{ heredoc_string_char* }
 heredoc_string_char        =  { !("\"" ~ PEEK ~ "}") ~ ANY }
 braces_quoted_string       =  { "{\"" ~ braces_quoted_string_inner ~ "\"}" }
 braces_quoted_string_inner = @{ braces_quoted_string_char* }
 braces_quoted_string_char  =  { !("\"}") ~ ANY }
-triple_quoted_string       =  { "\"\"\"" ~ triple_quoted_string_inner ~ "\"\"\"" }
-triple_quoted_string_inner = @{ triple_quoted_string_char* }
-triple_quoted_string_char  =  { !("\"\"\"") ~ ANY }
 quoted_string              =  { "\"" ~ quoted_string_inner ~ "\"" }
 quoted_string_inner        = @{ quoted_string_char* }
 quoted_string_char         =  { !"\"" ~ ANY }
@@ -136,9 +134,9 @@ type_without_void = {
     "ACL"
   | "BACKEND"
   | "BOOL"
+  | "INTEGER"
   | "FLOAT"
   | "ID"
-  | "INTEGER"
   | "IP"
   | "RTIME"
   | "STRING"
@@ -163,7 +161,7 @@ statement  = {
   | synthetic_base64_statement
 }
 
-literal    = { object | string | rtime | number | bool }
+literal    = { object | string+ | rtime | number | bool }
 expression = { primary+ ~ (binary_operator ~ primary)* }
 primary    = { function_call | variable | literal | "(" ~ expression ~ ")" | "!" ~ primary }
 
