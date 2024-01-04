@@ -1,0 +1,128 @@
+vcl = _{ SOI ~ declarations ~ EOI }
+
+// https://developer.fastly.com/reference/vcl/declarations/
+declarations = _{ declaration* }
+declaration  = _{
+    include_declaration
+  | sub_declaration
+  | acl_declaration
+  | backend_declaration
+  | director_declaration
+  | penaltybox_declaration
+  | ratecounter_declaration
+}
+
+// https://www.varnish-software.com/developers/tutorials/varnish-configuration-language-vcl/#include
+include_declaration =  { "include" ~ include_target ~ ";" }
+include_target      = _{ quoted_string }
+
+// https://www.varnish-software.com/developers/tutorials/varnish-configuration-language-vcl/#import
+import_declaration =  { "import" ~ import_target ~ ";" }
+import_target      = _{ ident }
+
+// https://developer.fastly.com/reference/vcl/declarations/acl/
+acl_declaration      =  { "acl" ~ acl_ident ~ acl_entries }
+acl_ident            = _{ ident }
+acl_entries          =  { acl_entry* }
+acl_entry            = _{ "!"? ~ acl_entry_value ~ ";" }
+acl_entry_value      = _{ string ~ acl_entry_value_cidr? }
+acl_entry_value_cidr = _{ "/" ~ ASCII_DIGIT+ }
+
+// https://developer.fastly.com/reference/vcl/declarations/backend/
+backend_declaration =  { "backend" ~ backend_ident ~ backend_entries }
+backend_ident       = _{ ident }
+backend_entries     =  { object | "none" }
+
+// https://developer.fastly.com/reference/vcl/declarations/director/
+director_declaration =  { "director" ~ director_ident ~ director_entries }
+director_ident       = _{ ident }
+// TODO: distribution, %values
+director_entries = { object }
+
+// https://developer.fastly.com/reference/vcl/declarations/penaltybox/
+penaltybox_declaration =  { "penaltybox" ~ penaltybox_ident ~ penaltybox_entries }
+penaltybox_ident       = _{ ident }
+penaltybox_entries     =  { "{" ~ "}" }
+
+// https://developer.fastly.com/reference/vcl/declarations/ratecounter/
+ratecounter_declaration =  { "ratecounter" ~ ratecounter_ident ~ ratecounter_entries }
+ratecounter_ident       = _{ ident }
+ratecounter_entries     =  { "{" ~ "}" }
+
+// https://developer.fastly.com/reference/vcl/declarations/sub/
+sub_declaration =  { "sub" ~ sub_ident ~ sub_type? ~ sub_body }
+sub_ident       = _{ ident }
+sub_type        = _{ type }
+sub_body        =  { "{" ~ sub_body_statements ~ "}" }
+
+// https://developer.fastly.com/reference/vcl/declarations/table/
+table_declaration =  { "table" ~ table_ident ~ table_type? ~ table_entries }
+table_ident       = _{ ident }
+table_type        = _{ type_without_void }
+table_entries     =  { "{" ~ table_entry* ~ "}" }
+table_entry       =  { table_key ~ ":" ~ table_value ~ ";" }
+table_key         = _{ string }
+table_value       = _{ object | string | number | bool | rtime | ident }
+
+// https://developer.fastly.com/reference/vcl/types/string/
+// https://www.varnish-software.com/developers/tutorials/varnish-configuration-language-vcl/#strings
+string                     = _{ braces_quoted_string | triple_quoted_string | quoted_string }
+braces_quoted_string       =  { "{" ~ PUSH(ANY*) ~ "\"" ~ braces_quoted_string_inner ~ "\"" ~ POP ~ "}" }
+braces_quoted_string_inner = @{ braces_quoted_string_char* }
+braces_quoted_string_char  = _{ !("\"" ~ PEEK ~ "}") ~ ANY }
+triple_quoted_string       =  { "\"\"\"" ~ triple_quoted_string_inner ~ "\"\"\"" }
+triple_quoted_string_inner = @{ triple_quoted_string_char* }
+triple_quoted_string_char  = _{ !("\"\"\"") ~ ANY }
+quoted_string              =  { "\"" ~ quoted_string_inner ~ "\"" }
+quoted_string_inner        = @{ quoted_string_char* }
+quoted_string_char         = _{
+    !("\"" | "\\") ~ ANY
+  | "\\" ~ ("\"" | "\\" | "/" | "b" | "f" | "n" | "r" | "t")
+}
+
+// https://developer.fastly.com/reference/vcl/types/bool/
+// https://www.varnish-software.com/developers/tutorials/varnish-configuration-language-vcl/#booleans
+bool = _{ "true" | "false" }
+
+// https://www.varnish-software.com/developers/tutorials/varnish-configuration-language-vcl/#numbers
+// https://developer.fastly.com/reference/vcl/types/integer/
+// https://developer.fastly.com/reference/vcl/types/float/
+number                  = _{ number_based10 | number_based16 }
+number_based10          = @{ "-"? ~ ASCII_DIGIT+ ~ number_based10_fraction? ~ number_based10_exponent? }
+number_based10_fraction = _{ "." ~ ASCII_DIGIT+ }
+number_based10_exponent = _{ "e" ~ ("+" | "-")? ~ ASCII_DIGIT+ }
+number_based16          = @{ "-"? ~ "0x" ~ ASCII_HEX_DIGIT+ ~ number_based16_fraction? ~ number_based16_exponent? }
+number_based16_fraction = _{ "." ~ ASCII_HEX_DIGIT+ }
+number_based16_exponent = _{ "p" ~ ("+" | "-")? ~ ASCII_DIGIT+ }
+
+// https://developer.fastly.com/reference/vcl/types/rtime/
+// https://www.varnish-software.com/developers/tutorials/varnish-configuration-language-vcl/#duration
+rtime          =  { rtime_value ~ rtime_unit }
+rtime_value    = @{ "-"? ~ ASCII_DIGIT+ ~ rtime_fraction? }
+rtime_fraction = _{ "." ~ ASCII_DIGIT+ }
+rtime_unit     = _{ "ms" | "s" | "m" | "h" | "d" | "y" }
+
+// object
+object          =  { "{" ~ object_entry* ~ "}" }
+object_entry    =  { object_key ~ "=" ~ object_value ~ ";" }
+object_key      = @{ "." ~ object_key_name }
+object_key_name = _{ ident }
+object_value    = _{ object | string | number | bool | rtime }
+
+// ident
+ident = _{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_" | "-")* }
+
+// types
+type              = _{ "VOID" | type_without_void }
+type_without_void = _{
+    "ACL"
+  | "BACKEND"
+  | "BOOL"
+  | "FLOAT"
+  | "ID"
+  | "INTEGER"
+  | "IP"
+  | "RTIME"
+  | "STRING"
+  | "TIME"
+}
