@@ -43,39 +43,41 @@ pub fn parse(src: &str) -> ParseResult<Vcl> {
 
 #[cfg(test)]
 mod tests {
+    use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
+
     use super::*;
 
     #[test]
     fn blank() {
         assert_eq!(
-            parse(""),
-            Ok(Vcl {
+            parse("").unwrap(),
+            Vcl {
                 declarations: vec![]
-            })
+            }
         );
     }
 
     #[test]
     fn include() {
         assert_eq!(
-            parse("include \"foo.vcl\";"),
-            Ok(Vcl {
+            parse("include \"foo.vcl\";").unwrap(),
+            Vcl {
                 declarations: vec![Declaration::Include(IncludeDeclaration {
                     path: "foo.vcl".to_string()
                 })]
-            })
+            }
         );
     }
 
     #[test]
     fn import() {
         assert_eq!(
-            parse("import foo;"),
-            Ok(Vcl {
+            parse("import foo;").unwrap(),
+            Vcl {
                 declarations: vec![Declaration::Import(ImportDeclaration {
                     ident: "foo".to_string()
                 })]
-            })
+            }
         );
     }
 
@@ -85,42 +87,48 @@ mod tests {
             parse(
                 "\
 acl office_ip_ranges {
+    \"localhost\";
     \"192.0.2.0\"/24;                              # internal office...
     ! \"192.0.2.12\";                              # ... except for the vending machine
     \"198.51.100.4\";                              # remote VPN office
     \"2001:db8:ffff:ffff:ffff:ffff:ffff:ffff\";    # ipv6 address remote
-}"
-            ),
-            Ok(Vcl {
+}",
+            )
+            .unwrap(),
+            Vcl {
                 declarations: vec![Declaration::Acl(AclDeclaration {
                     name: "office_ip_ranges".to_string(),
                     entries: vec![
-                        AclEntry::Ipv4 {
-                            addr: [192, 0, 2, 0],
+                        AclEntry {
+                            negated: false,
+                            addr: IpAddr::V4(Ipv4Addr::LOCALHOST),
+                            cidr: 0,
+                        },
+                        AclEntry {
+                            negated: false,
+                            addr: IpAddr::V4(Ipv4Addr::new(192, 0, 2, 0)),
                             cidr: 24,
-                            negated: false
                         },
-                        AclEntry::Ipv4 {
-                            addr: [192, 0, 2, 12],
+                        AclEntry {
+                            negated: true,
+                            addr: IpAddr::V4(Ipv4Addr::new(192, 0, 2, 12)),
                             cidr: 0,
-                            negated: true
                         },
-                        AclEntry::Ipv4 {
-                            addr: [198, 51, 100, 4],
+                        AclEntry {
+                            negated: false,
+                            addr: IpAddr::V4(Ipv4Addr::new(198, 51, 100, 4)),
                             cidr: 0,
-                            negated: false
                         },
-                        AclEntry::Ipv6 {
-                            addr: [
-                                0x20, 0x01, 0x0d, 0xb8, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-                                0xff, 0xff, 0xff, 0xff, 0xff
-                            ],
+                        AclEntry {
+                            negated: false,
+                            addr: IpAddr::V6(Ipv6Addr::new(
+                                0x2001, 0xdb8, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff
+                            )),
                             cidr: 0,
-                            negated: false
                         }
                     ],
                 })]
-            })
+            }
         );
     }
 }

@@ -39,11 +39,12 @@ ImportTarget      = _{ Ident }
 AclDeclaration    =  { "acl" ~ AclIdent ~ AclBody }
 AclIdent          = _{ Ident }
 AclBody           = _{ "{" ~ AclEntries ~ "}" }
-AclEntries        =  { AclEntry* }
-AclEntry          =  { AclEntryValue ~ ";" }
-AclEntryValue     =  { AclEntryNegated? ~ QuotedString ~ AclEntryValueCidr? }
+AclEntries        = _{ AclEntry* }
+AclEntry          = _{ AclEntryValue ~ ";" }
+AclEntryValue     =  { AclEntryNegated? ~ QuotedString ~ AclEntryCidr? }
 AclEntryNegated   =  { "!" }
-AclEntryValueCidr =  { "/" ~ ASCII_DIGIT+ }
+AclEntryCidr      = _{ "/" ~ AclEntryCidrValue }
+AclEntryCidrValue =  { ASCII_DIGIT+ }
 
 // https://developer.fastly.com/reference/vcl/declarations/backend/
 BackendDeclaration = { "backend" ~ BackendIdent ~ BackendBody }

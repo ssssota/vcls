@@ -1,7 +1,7 @@
 use pest::iterators::Pair;
 use vcls_ast::{Declaration, IncludeDeclaration};
 
-use crate::{error::ParseError, ParseResult, Rule};
+use crate::{error::ParseError, utils::remove_quotes, ParseResult, Rule};
 
 pub fn handle(pair: Pair<Rule>) -> ParseResult<Declaration> {
     let mut inner = pair.into_inner();
@@ -11,6 +11,6 @@ pub fn handle(pair: Pair<Rule>) -> ParseResult<Declaration> {
             message: "Include declaration must have a path".to_string(),
         }])?
         .as_str();
-    let path = quoted_path[1..quoted_path.len() - 1].to_string();
+    let path = remove_quotes(quoted_path);
     Ok(Declaration::Include(IncludeDeclaration { path }))
 }

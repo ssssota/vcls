@@ -1,3 +1,5 @@
+use std::net::IpAddr;
+
 #[derive(Debug, PartialEq)]
 pub struct Pos(usize, usize);
 
@@ -82,17 +84,10 @@ pub enum DirectorType {
 }
 
 #[derive(Debug, PartialEq)]
-pub enum AclEntry {
-    Ipv4 {
-        addr: [u8; 4],
-        cidr: u8,
-        negated: bool,
-    },
-    Ipv6 {
-        addr: [u8; 16],
-        cidr: u8,
-        negated: bool,
-    },
+pub struct AclEntry {
+    pub negated: bool,
+    pub addr: IpAddr,
+    pub cidr: u8,
 }
 
 #[derive(Debug, PartialEq)]
