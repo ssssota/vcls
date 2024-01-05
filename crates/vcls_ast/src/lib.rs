@@ -1,46 +1,71 @@
+#[derive(Debug, PartialEq)]
 pub struct Pos(usize, usize);
 
+#[derive(Debug, PartialEq)]
 pub struct Vcl {
     pub declarations: Vec<Declaration>,
 }
 
 pub type Obj = Vec<(String, Literal)>;
 
+#[derive(Debug, PartialEq)]
 pub enum Declaration {
-    Include {
-        path: String,
-    },
-    Import {
-        ident: String,
-    },
-    Subroutine {
-        name: String,
-        return_type: Type,
-        body: Vec<Statement>,
-    },
-    Acl {
-        name: String,
-        entries: Vec<AclEntry>,
-    },
-    Backend {
-        name: String,
-        config: Option<Obj>,
-    },
-    Director {
-        name: String,
-        typ: DirectorType,
-        config: Obj,
-        directions: Vec<Obj>,
-    },
+    Include(IncludeDeclaration),
+    Import(ImportDeclaration),
+    Subroutine(SubroutineDeclaration),
+    Acl(AclDeclaration),
+    Backend(BackendDeclaration),
+    Director(DirectorDeclaration),
     PenaltyBox,
     RateCounter,
-    Table {
-        name: String,
-        typ: Type,
-        values: Vec<Literal>,
-    },
+    Table(TableDeclaration),
 }
 
+#[derive(Debug, PartialEq)]
+pub struct IncludeDeclaration {
+    pub path: String,
+}
+
+#[derive(Debug, PartialEq)]
+pub struct ImportDeclaration {
+    pub ident: String,
+}
+
+#[derive(Debug, PartialEq)]
+pub struct SubroutineDeclaration {
+    pub name: String,
+    pub return_type: Type,
+    pub body: Vec<Statement>,
+}
+
+#[derive(Debug, PartialEq)]
+pub struct AclDeclaration {
+    pub name: String,
+    pub entries: Vec<AclEntry>,
+}
+
+#[derive(Debug, PartialEq)]
+pub struct BackendDeclaration {
+    pub name: String,
+    pub config: Option<Obj>,
+}
+
+#[derive(Debug, PartialEq)]
+pub struct DirectorDeclaration {
+    pub name: String,
+    pub typ: DirectorType,
+    pub config: Option<Obj>,
+    pub directions: Vec<Obj>,
+}
+
+#[derive(Debug, PartialEq)]
+pub struct TableDeclaration {
+    pub name: String,
+    pub typ: Type,
+    pub values: Vec<Literal>,
+}
+
+#[derive(Debug, PartialEq)]
 pub enum DirectorType {
     /// https://developer.fastly.com/reference/vcl/declarations/director/#random
     Random,
@@ -56,6 +81,7 @@ pub enum DirectorType {
     Unknown(String),
 }
 
+#[derive(Debug, PartialEq)]
 pub enum AclEntry {
     Ipv4 {
         addr: [u8; 4],
@@ -69,6 +95,7 @@ pub enum AclEntry {
     },
 }
 
+#[derive(Debug, PartialEq)]
 pub enum Type {
     /// https://developer.fastly.com/reference/vcl/types/acl/
     Acl,
@@ -96,6 +123,7 @@ pub enum Type {
     Unknown(String),
 }
 
+#[derive(Debug, PartialEq)]
 pub enum Literal {
     String(String),
     Number(f64),
@@ -163,8 +191,10 @@ impl std::ops::Div<u64> for RelativeTime {
     }
 }
 
+#[derive(Debug, PartialEq)]
 pub struct Object {}
 
+#[derive(Debug, PartialEq)]
 pub enum Statement {
     If(IfStatement),
     Set(SetStatement),
@@ -180,22 +210,29 @@ pub enum Statement {
     Return(ReturnStatement),
     Synthetic(SyntheticStatement),
 }
+
+#[derive(Debug, PartialEq)]
 pub struct IfStatement {
     pub condition: Expression,
     pub body: Vec<Statement>,
     pub else_ifs: Vec<ElseIfStatement>,
     pub else_: Option<Vec<Statement>>,
 }
+
+#[derive(Debug, PartialEq)]
 pub struct ElseIfStatement {
     pub condition: Expression,
     pub body: Vec<Statement>,
 }
 
+#[derive(Debug, PartialEq)]
 pub struct SetStatement {
     pub target: Variable,
     pub operator: SetOperator,
     pub value: Expression,
 }
+
+#[derive(Debug, PartialEq)]
 pub enum SetOperator {
     Set,
     Add,
@@ -213,45 +250,70 @@ pub enum SetOperator {
     AmpAmp,
     BarBar,
 }
+
+#[derive(Debug, PartialEq)]
 pub struct UnsetStatement {
     pub target: Variable,
     pub keyword: UnsetKeyword,
 }
+
+#[derive(Debug, PartialEq)]
 pub enum UnsetKeyword {
     Unset,
     Remove,
 }
+
+#[derive(Debug, PartialEq)]
 pub struct AddStatement {
     pub target: Variable,
     pub value: Expression,
 }
+
+#[derive(Debug, PartialEq)]
 pub struct CallStatement {
     pub target: String,
 }
+
+#[derive(Debug, PartialEq)]
 pub struct DeclareStatement {
     pub target: Variable,
     pub typ: Type,
 }
+
+#[derive(Debug, PartialEq)]
 pub struct ErrorStatement {
     pub status: Option<u8>,
     pub message: Option<String>,
 }
+
+#[derive(Debug, PartialEq)]
 pub struct EsiStatement;
+
+#[derive(Debug, PartialEq)]
 pub struct IncludeStatement {
     pub path: String,
 }
+
+#[derive(Debug, PartialEq)]
 pub struct LogStatement {
     pub message: String,
 }
+
+#[derive(Debug, PartialEq)]
 pub struct RestartStatement;
+
+#[derive(Debug, PartialEq)]
 pub struct ReturnStatement {
     pub value: Option<Expression>,
 }
+
+#[derive(Debug, PartialEq)]
 pub struct SyntheticStatement {
     pub value: Option<Expression>,
     pub base64: bool,
 }
 
+#[derive(Debug, PartialEq)]
 pub enum Expression {
     Literal(Literal),
     Variable(Variable),
@@ -259,38 +321,68 @@ pub enum Expression {
     Unary(UnaryExpression),
     Call(CallExpression),
 }
+
+#[derive(Debug, PartialEq)]
 pub struct Variable {
     pub name: String,
     pub properties: Vec<String>,
     pub sub_field: Option<String>,
 }
+
+#[derive(Debug, PartialEq)]
 pub struct BinaryExpression {
     pub lhs: Box<Expression>,
     pub operator: BinaryOperator,
     pub rhs: Box<Expression>,
 }
+
+#[derive(Debug, PartialEq)]
 pub enum BinaryOperator {
-    Eq,
+    /// `==` (Equality)
+
+    /// `!=` (Non-equality)
     Ne,
+    /// `<` (Less than)
     Lt,
+    /// `<=` (Less than or equal to)
     Le,
+    /// `>` (Greater than)
     Gt,
+    /// `>=` (Greater than or equal to)
     Ge,
+    /// `&&` (Logical AND)
     AmpAmp,
+    /// `||` (Logical OR)
     BarBar,
+    /// `+` (Addition)
     Add,
+    /// `-` (Subtraction)
     Sub,
+    /// `*` (Multiplication)
     Mul,
+    /// `/` (Division)
     Div,
+    /// `~` (Regular expression match)
+    Tilde,
+    /// `!~` (Regular expression non-match)
+    NotTilde,
 }
+
+#[derive(Debug, PartialEq)]
 pub struct UnaryExpression {
     pub operator: UnaryOperator,
     pub rhs: Box<Expression>,
 }
+
+#[derive(Debug, PartialEq)]
 pub enum UnaryOperator {
+    /// `!` (Logical NOT)
     Not,
+    /// `-` (Negation)
     Neg,
 }
+
+#[derive(Debug, PartialEq)]
 pub struct CallExpression {
     pub target: Variable,
     pub arguments: Vec<Expression>,
