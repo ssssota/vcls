@@ -3,10 +3,6 @@
 version = 3
 
 [[package]]
-name = "ast"
-version = "0.1.0"
-
-[[package]]
 name = "block-buffer"
 version = "0.10.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -77,14 +73,6 @@ name = "once_cell"
 version = "1.19.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3fdb12b2476b595f9358c5161aa467c2438859caa136dec86c26fdd2efe17b92"
-
-[[package]]
-name = "parser"
-version = "0.1.0"
-dependencies = [
- "pest",
- "pest_derive",
-]
 
 [[package]]
 name = "pest"
@@ -208,6 +196,19 @@ name = "unicode-ident"
 version = "1.0.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3354b9ac3fae1ff6755cb6db53683adb661634f67557942dea4facebec0fee4b"
+
+[[package]]
+name = "vcls_ast"
+version = "0.1.0"
+
+[[package]]
+name = "vcls_parser"
+version = "0.1.0"
+dependencies = [
+ "pest",
+ "pest_derive",
+ "vcls_ast",
+]
 
 [[package]]
 name = "version_check"

@@ -1,8 +1,11 @@
 [package]
-name = "ast"
-version = "0.1.0"
 edition = "2021"
+name = "vcls_parser"
+version = "0.1.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+pest = "2.7"
+pest_derive = "2.7"
+vcls_ast = {workspace = true}
