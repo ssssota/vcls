@@ -36,6 +36,7 @@ pub enum Declaration {
     Table {
         name: String,
         typ: Type,
+        values: Vec<Literal>,
     },
 }
 
@@ -50,6 +51,8 @@ pub enum DirectorType {
     Client,
     /// https://developer.fastly.com/reference/vcl/declarations/director/#consistent-hashing
     ConsistentHashing,
+    /// fallback
+    Unknown(String),
 }
 
 pub enum AclEntry {

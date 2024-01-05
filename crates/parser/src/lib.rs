@@ -1,3 +1,3 @@
 #[derive(pest_derive::Parser)]
-#[grammar = "./vcl.pest"]
+#[grammar = "./fastly-vcl.pest"]
 pub struct VclParser;

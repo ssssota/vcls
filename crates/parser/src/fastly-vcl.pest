@@ -84,17 +84,17 @@ table_value       = { expression }
 // https://developer.fastly.com/reference/vcl/types/string/
 // https://www.varnish-software.com/developers/tutorials/varnish-configuration-language-vcl/#strings
 // Triple-quoted strings are not supported by Fastly
-string                     =  { empty_string | heredoc_string | braces_quoted_string | quoted_string }
-empty_string               =  { "{" ~ PUSH(ANY*) ~ "\"\"" ~ POP ~ "}" | "{\"\"}" | "\"\"" }
-heredoc_string             =  { "{" ~ PUSH(ANY*) ~ "\"" ~ heredoc_string_inner ~ "\"" ~ POP ~ "}" }
+string                     = @{ empty_string | heredoc_string | braces_quoted_string | quoted_string }
+empty_string               = @{ "{" ~ PUSH(ANY*) ~ "\"\"" ~ POP ~ "}" | "{\"\"}" | "\"\"" }
+heredoc_string             = @{ "{" ~ PUSH(ANY*) ~ "\"" ~ heredoc_string_inner ~ "\"" ~ POP ~ "}" }
 heredoc_string_inner       = @{ heredoc_string_char* }
-heredoc_string_char        =  { !("\"" ~ PEEK ~ "}") ~ ANY }
-braces_quoted_string       =  { "{\"" ~ braces_quoted_string_inner ~ "\"}" }
+heredoc_string_char        = @{ !("\"" ~ PEEK ~ "}") ~ ANY }
+braces_quoted_string       = @{ "{\"" ~ braces_quoted_string_inner ~ "\"}" }
 braces_quoted_string_inner = @{ braces_quoted_string_char* }
-braces_quoted_string_char  =  { !("\"}") ~ ANY }
-quoted_string              =  { "\"" ~ quoted_string_inner ~ "\"" }
+braces_quoted_string_char  = @{ !("\"}") ~ ANY }
+quoted_string              = @{ "\"" ~ quoted_string_inner ~ "\"" }
 quoted_string_inner        = @{ quoted_string_char* }
-quoted_string_char         =  { !"\"" ~ ANY }
+quoted_string_char         = @{ !"\"" ~ ANY }
 
 // https://developer.fastly.com/reference/vcl/types/bool/
 // https://www.varnish-software.com/developers/tutorials/varnish-configuration-language-vcl/#booleans
