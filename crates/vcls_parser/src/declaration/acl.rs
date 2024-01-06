@@ -1,7 +1,4 @@
-use std::{
-    net::{IpAddr, Ipv4Addr},
-    vec,
-};
+use std::vec;
 
 use pest::iterators::Pair;
 use vcls_ast::{AclDeclaration, AclEntry, Declaration};
@@ -66,35 +63,27 @@ impl AclEntryBuilder {
     fn cidr(&mut self, cidr: u8) {
         self.cidr = cidr;
     }
-    fn build(&self) -> Result<AclEntry, ParseError> {
-        if let Some(addr) = &self.addr {
-            if addr == "localhost" {
-                Ok(AclEntry {
-                    negated: self.nagated,
-                    addr: IpAddr::V4(Ipv4Addr::LOCALHOST),
-                    cidr: self.cidr,
-                })
-            } else {
-                Ok(AclEntry {
-                    negated: self.nagated,
-                    addr: addr.parse().map_err(|e| ParseError {
-                        message: format!("Invalid IP address: {}", e),
-                    })?,
-                    cidr: self.cidr,
-                })
-            }
+}
+impl TryInto<AclEntry> for AclEntryBuilder {
+    type Error = ParseError;
+    fn try_into(self) -> Result<AclEntry, Self::Error> {
+        if let Some(addr) = self.addr {
+            Ok(AclEntry {
+                negated: self.nagated,
+                addr,
+                cidr: self.cidr,
+            })
         } else {
             Err(ParseError {
-                message: "ACL entry must have an address".to_string(),
+                message: "ACL entry address not found".to_string(),
             })
         }
     }
 }
 
 fn handle_acl_entry(pair: Pair<Rule>) -> ParseResult<AclEntry> {
-    let inner = skip_comments(pair.into_inner());
     let mut builder = AclEntryBuilder::new();
-    for pair in inner {
+    for pair in skip_comments(pair.into_inner()) {
         match pair.as_rule() {
             Rule::AclEntryNegated => builder.negated(),
             Rule::QuotedString => builder.addr(remove_quotes(pair.as_str())),
@@ -102,5 +91,5 @@ fn handle_acl_entry(pair: Pair<Rule>) -> ParseResult<AclEntry> {
             _ => unreachable!(),
         }
     }
-    builder.build().map_err(|e| vec![e])
+    builder.try_into().map_err(|e| vec![e])
 }

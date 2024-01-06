@@ -13,3 +13,13 @@ pub fn skip_comments(pairs: Pairs<Rule>) -> impl Iterator<Item = pest::iterators
 pub fn remove_quotes(s: &str) -> String {
     s[1..s.len() - 1].to_string()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn remove_quote() {
+        assert_eq!(remove_quotes("\"foo\""), "foo".to_string());
+    }
+}

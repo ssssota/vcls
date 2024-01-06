@@ -1,16 +1,16 @@
-use std::net::IpAddr;
+use std::str::FromStr;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Pos(usize, usize);
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Vcl {
     pub declarations: Vec<Declaration>,
 }
 
 pub type Obj = Vec<(String, Literal)>;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Declaration {
     Include(IncludeDeclaration),
     Import(ImportDeclaration),
@@ -18,41 +18,41 @@ pub enum Declaration {
     Acl(AclDeclaration),
     Backend(BackendDeclaration),
     Director(DirectorDeclaration),
-    PenaltyBox,
-    RateCounter,
+    PenaltyBox(PenaltyBoxDeclaration),
+    RateCounter(RateCounterDeclaration),
     Table(TableDeclaration),
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct IncludeDeclaration {
     pub path: String,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct ImportDeclaration {
     pub ident: String,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct SubroutineDeclaration {
     pub name: String,
     pub return_type: Type,
     pub body: Vec<Statement>,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct AclDeclaration {
     pub name: String,
     pub entries: Vec<AclEntry>,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct BackendDeclaration {
     pub name: String,
     pub config: Option<Obj>,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct DirectorDeclaration {
     pub name: String,
     pub typ: DirectorType,
@@ -60,14 +60,36 @@ pub struct DirectorDeclaration {
     pub directions: Vec<Obj>,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
+pub struct PenaltyBoxDeclaration {
+    pub name: String,
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct RateCounterDeclaration {
+    pub name: String,
+}
+
+#[derive(Debug, PartialEq, Clone)]
 pub struct TableDeclaration {
     pub name: String,
     pub typ: Type,
-    pub values: Vec<Literal>,
+    pub entries: Vec<TableEntry>,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
+pub struct TableEntry {
+    pub key: String,
+    pub value: TableValue,
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub enum TableValue {
+    Ident(Variable),
+    Literal(Literal),
+}
+
+#[derive(Debug, PartialEq, Clone)]
 pub enum DirectorType {
     /// https://developer.fastly.com/reference/vcl/declarations/director/#random
     Random,
@@ -83,14 +105,14 @@ pub enum DirectorType {
     Unknown(String),
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct AclEntry {
     pub negated: bool,
-    pub addr: IpAddr,
+    pub addr: String,
     pub cidr: u8,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Type {
     /// https://developer.fastly.com/reference/vcl/types/acl/
     Acl,
@@ -118,11 +140,38 @@ pub enum Type {
     Unknown(String),
 }
 
-#[derive(Debug, PartialEq)]
+impl Type {
+    pub fn from_str(s: &str) -> Self {
+        match s {
+            "ACL" => Self::Acl,
+            "BACKEND" => Self::Backend,
+            "BOOL" => Self::Bool,
+            "FLOAT" => Self::Float,
+            "ID" => Self::ID,
+            "INTEGER" => Self::Integer,
+            "IP" => Self::IP,
+            "RTIME" => Self::RTime,
+            "STRING" => Self::String,
+            "TIME" => Self::Time,
+            "VOID" => Self::Void,
+            _ => Self::Unknown(s.to_string()),
+        }
+    }
+}
+impl FromStr for Type {
+    type Err = ();
+    #[inline]
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(Self::from_str(s))
+    }
+}
+
+#[derive(Debug, PartialEq, Clone)]
 pub enum Literal {
     String(String),
-    Number(f64),
-    Boolean(bool),
+    Integer(i64),
+    Float(f64),
+    Bool(bool),
     RTime(RelativeTime),
     Object(Obj),
 }
@@ -137,24 +186,24 @@ impl RelativeTime {
         Self { ms }
     }
     #[inline]
-    pub fn from_sec(sec: u64) -> Self {
-        Self::from_ms(sec * 1000)
+    pub fn from_sec(sec: f64) -> Self {
+        Self::from_ms((sec * 1000.0) as u64)
     }
     #[inline]
-    pub fn from_min(min: u64) -> Self {
-        Self::from_sec(min * 60)
+    pub fn from_min(min: f64) -> Self {
+        Self::from_sec(min * 60.0)
     }
     #[inline]
-    pub fn from_hour(hour: u64) -> Self {
-        Self::from_min(hour * 60)
+    pub fn from_hour(hour: f64) -> Self {
+        Self::from_min(hour * 60.0)
     }
     #[inline]
-    pub fn from_day(day: u64) -> Self {
-        Self::from_hour(day * 24)
+    pub fn from_day(day: f64) -> Self {
+        Self::from_hour(day * 24.0)
     }
     #[inline]
-    pub fn from_year(year: u64) -> Self {
-        Self::from_day(year * 365)
+    pub fn from_year(year: f64) -> Self {
+        Self::from_day(year * 365.0)
     }
 }
 impl std::ops::Add for RelativeTime {
@@ -186,10 +235,10 @@ impl std::ops::Div<u64> for RelativeTime {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Object {}
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Statement {
     If(IfStatement),
     Set(SetStatement),
@@ -206,7 +255,7 @@ pub enum Statement {
     Synthetic(SyntheticStatement),
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct IfStatement {
     pub condition: Expression,
     pub body: Vec<Statement>,
@@ -214,20 +263,20 @@ pub struct IfStatement {
     pub else_: Option<Vec<Statement>>,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct ElseIfStatement {
     pub condition: Expression,
     pub body: Vec<Statement>,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct SetStatement {
     pub target: Variable,
     pub operator: SetOperator,
     pub value: Expression,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum SetOperator {
     Set,
     Add,
@@ -246,69 +295,69 @@ pub enum SetOperator {
     BarBar,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct UnsetStatement {
     pub target: Variable,
     pub keyword: UnsetKeyword,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum UnsetKeyword {
     Unset,
     Remove,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct AddStatement {
     pub target: Variable,
     pub value: Expression,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct CallStatement {
     pub target: String,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct DeclareStatement {
     pub target: Variable,
     pub typ: Type,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct ErrorStatement {
     pub status: Option<u8>,
     pub message: Option<String>,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct EsiStatement;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct IncludeStatement {
     pub path: String,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct LogStatement {
     pub message: String,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct RestartStatement;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct ReturnStatement {
     pub value: Option<Expression>,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct SyntheticStatement {
     pub value: Option<Expression>,
     pub base64: bool,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Expression {
     Literal(Literal),
     Variable(Variable),
@@ -317,21 +366,21 @@ pub enum Expression {
     Call(CallExpression),
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Variable {
     pub name: String,
     pub properties: Vec<String>,
     pub sub_field: Option<String>,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct BinaryExpression {
     pub lhs: Box<Expression>,
     pub operator: BinaryOperator,
     pub rhs: Box<Expression>,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum BinaryOperator {
     /// `==` (Equality)
 
@@ -363,13 +412,13 @@ pub enum BinaryOperator {
     NotTilde,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct UnaryExpression {
     pub operator: UnaryOperator,
     pub rhs: Box<Expression>,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum UnaryOperator {
     /// `!` (Logical NOT)
     Not,
@@ -377,7 +426,7 @@ pub enum UnaryOperator {
     Neg,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct CallExpression {
     pub target: Variable,
     pub arguments: Vec<Expression>,

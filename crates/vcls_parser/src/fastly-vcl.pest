@@ -52,21 +52,21 @@ BackendIdent       = { Ident }
 BackendBody        = { Object | "none" }
 
 // https://developer.fastly.com/reference/vcl/declarations/director/
-DirectorDeclaration = { "director" ~ DirectorIdent ~ DirectorType ~ DirectorBody }
-DirectorIdent       = { Ident }
-DirectorType        = { Ident }
-DirectorBody        = { "{" ~ (ObjectEntry | DirectorEntry)* ~ "}" }
-DirectorEntry       = { Object }
+DirectorDeclaration =  { "director" ~ DirectorIdent ~ DirectorType ~ DirectorBody }
+DirectorIdent       = _{ Ident }
+DirectorType        = _{ Ident }
+DirectorBody        =  { "{" ~ (ObjectEntry | DirectorEntry)* ~ "}" }
+DirectorEntry       =  { Object }
 
 // https://developer.fastly.com/reference/vcl/declarations/penaltybox/
-PenaltyboxDeclaration = { "penaltybox" ~ PenaltyboxIdent ~ PenaltyboxBody }
-PenaltyboxIdent       = { Ident }
-PenaltyboxBody        = { "{" ~ "}" }
+PenaltyboxDeclaration =  { "penaltybox" ~ PenaltyboxIdent ~ PenaltyboxBody }
+PenaltyboxIdent       = _{ Ident }
+PenaltyboxBody        =  { "{" ~ "}" }
 
 // https://developer.fastly.com/reference/vcl/declarations/ratecounter/
-RateCounterDeclaration = { "ratecounter" ~ RateCounterIdent ~ RateCounterBody }
-RateCounterIdent       = { Ident }
-RateCounterBody        = { "{" ~ "}" }
+RateCounterDeclaration =  { "ratecounter" ~ RateCounterIdent ~ RateCounterBody }
+RateCounterIdent       = _{ Ident }
+RateCounterBody        =  { "{" ~ "}" }
 
 // https://developer.fastly.com/reference/vcl/declarations/sub/
 SubDeclaration    = { "sub" ~ SubIdent ~ SubType? ~ SubBody }
@@ -76,20 +76,21 @@ SubBody           = { "{" ~ SubBodyStatements ~ "}" }
 SubBodyStatements = { Statements }
 
 // https://developer.fastly.com/reference/vcl/declarations/table/
-TableDeclaration = { "table" ~ TableIdent ~ TableType? ~ TableBody }
-TableIdent       = { Ident }
-TableType        = { Type }
-TableBody        = { "{" ~ (TableEntry ~ ("," ~ TableEntry)*)? ~ "}" }
-TableEntry       = { TableKey ~ ":" ~ TableValue }
-TableKey         = { String }
-TableValue       = { Expression }
+TableDeclaration =  { "table" ~ TableIdent ~ TableType? ~ TableBody }
+TableIdent       = _{ Ident }
+TableType        = _{ Type }
+TableBody        =  { "{" ~ (TableEntry ~ ("," ~ TableEntry)* ~ ","?)? ~ "}" }
+TableEntry       =  { TableKey ~ ":" ~ TableValue }
+TableKey         =  { String }
+TableValue       =  { Literal | Ident }
 
 // https://developer.fastly.com/reference/vcl/types/string/
 // https://www.varnish-software.com/developers/tutorials/varnish-configuration-language-vcl/#strings
 // Triple-quoted strings are not supported by Fastly
-String                  = @{ EmptyString | HeredocString | BracesQuotedString | QuotedString }
-EmptyString             = @{ "{" ~ PUSH(ANY*) ~ "\"\"" ~ POP ~ "}" | "{\"\"}" | "\"\"" }
-HeredocString           = @{ "{" ~ PUSH(ANY*) ~ "\"" ~ HeredocStringInner ~ "\"" ~ POP ~ "}" }
+String                  =  { StringToken+ }
+StringToken             =  { EmptyString | HeredocString | BracesQuotedString | QuotedString }
+EmptyString             = @{ "{" ~ PUSH((ASCII_ALPHA | "_")+) ~ "\"\"" ~ POP ~ "}" | "{\"\"}" | "\"\"" }
+HeredocString           = @{ "{" ~ PUSH((ASCII_ALPHA | "_")+) ~ "\"" ~ HeredocStringInner ~ "\"" ~ POP ~ "}" }
 HeredocStringInner      = @{ HeredocStringChar* }
 HeredocStringChar       = @{ !("\"" ~ PEEK ~ "}") ~ ANY }
 BracesQuotedString      = @{ "{\"" ~ BracesQuotedStringInner ~ "\"}" }
@@ -116,8 +117,9 @@ NumberBased16Exponent = @{ "p" ~ ("+" | "-")? ~ ASCII_DIGIT+ }
 
 // https://developer.fastly.com/reference/vcl/types/rtime/
 // https://www.varnish-software.com/developers/tutorials/varnish-configuration-language-vcl/#duration
-RTime         = @{ RTimeValue ~ RTimeUnit }
-RTimeValue    = @{ "-"? ~ ASCII_DIGIT+ ~ RTimeFraction? }
+RTime         =  { RTimeValue ~ RTimeUnit }
+RTimeValue    =  { "-"? ~ RTimeAbsolute }
+RTimeAbsolute = @{ ASCII_DIGIT+ ~ RTimeFraction? }
 RTimeFraction = @{ "." ~ ASCII_DIGIT+ }
 RTimeUnit     = @{ "ms" | "s" | "m" | "h" | "d" | "y" }
 
@@ -126,10 +128,10 @@ Object        =  { "{" ~ ObjectEntry* ~ "}" }
 ObjectEntry   =  { ObjectKey ~ "=" ~ ObjectValue ~ ";" }
 ObjectKey     = @{ "." ~ ObjectKeyName }
 ObjectKeyName =  { Ident }
-ObjectValue   =  { Expression }
+ObjectValue   =  { Literal | Ident }
 
 // ident
-Ident = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_" | "-")* }
+Ident = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }
 
 // types
 Type = {
@@ -164,12 +166,13 @@ Statement  = {
   | SyntheticBase64Statement
 }
 
-Literal    = { Object | String+ | RTime | Number | Bool }
+Literal    = { Object | String | RTime | Number | Bool }
 Expression = { Primary+ ~ (BinaryOperator ~ Primary)* }
 Primary    = { FunctionCall | Variable | Literal | "(" ~ Expression ~ ")" | "!" ~ Primary }
 
-Variable         = { Ident ~ VariableProperty* }
-VariableProperty = { "." ~ Ident }
+Variable         =  { Ident ~ VariableProp* }
+VariableProp     =  { "." ~ VariablePropName }
+VariablePropName = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_" | "-")* }
 
 FunctionCall     = { Variable ~ "(" ~ FunctionCallArgs? ~ ")" }
 FunctionCallArgs = { Expression ~ ("," ~ Expression)* }
@@ -244,7 +247,7 @@ DeclareType      = { Type }
 // https://developer.fastly.com/reference/vcl/statements/error/
 ErrorStatement = { "error" ~ ErrorCode? ~ ErrorMessage? ~ ";" }
 ErrorCode      = { Number }
-ErrorMessage   = { String }
+ErrorMessage   = { StringToken }
 
 // https://developer.fastly.com/reference/vcl/statements/esi/
 EsiStatement = { "esi" ~ ";" }
