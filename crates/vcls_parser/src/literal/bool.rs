@@ -2,9 +2,9 @@ use pest::iterators::Pair;
 
 use crate::{error::ParseError, ParseResult, Rule};
 
-pub fn handle_bool(pair: Pair<Rule>) -> ParseResult<bool> {
+pub fn handle(pair: Pair<Rule>) -> ParseResult<bool> {
     if pair.as_rule() != Rule::Bool {
-        return Err(vec![]);
+        unreachable!()
     }
     match pair.as_str() {
         "true" => Ok(true),

@@ -3,7 +3,7 @@ use vcls_ast::{Declaration, TableDeclaration, TableEntry, TableValue, Type, Vari
 
 use crate::{
     error::ParseError,
-    literal::{handle_literal, string::handle_string},
+    literal::{handle_literal, string},
     utils::skip_comments,
     ParseResult, Rule,
 };
@@ -33,9 +33,7 @@ pub fn handle(pair: Pair<Rule>) -> ParseResult<Declaration> {
 
 fn handle_table_body(pair: Pair<Rule>) -> ParseResult<Vec<TableEntry>> {
     if pair.as_rule() != Rule::TableBody {
-        return Err(vec![ParseError {
-            message: "Expected table body".to_string(),
-        }]);
+        unreachable!()
     }
     let mut entries = vec![];
     let mut errors = vec![];
@@ -58,10 +56,10 @@ fn handle_table_body(pair: Pair<Rule>) -> ParseResult<Vec<TableEntry>> {
 
 fn handle_table_entry(pair: Pair<Rule>) -> ParseResult<TableEntry> {
     if pair.as_rule() != Rule::TableEntry {
-        return Err(vec![]);
+        unreachable!()
     }
     let mut inner = pair.into_inner();
-    let key = handle_string(
+    let key = string::handle(
         inner
             .find(|p| p.as_rule() == Rule::TableKey)
             .ok_or(vec![ParseError {
@@ -82,7 +80,9 @@ fn handle_table_entry(pair: Pair<Rule>) -> ParseResult<TableEntry> {
     Ok(TableEntry {
         key,
         value: match value.as_rule() {
-            Rule::Literal => TableValue::Literal(handle_literal(value)?),
+            Rule::String | Rule::RTime | Rule::Number | Rule::Bool => {
+                TableValue::Literal(handle_literal(value)?)
+            }
             Rule::Ident => TableValue::Ident(Variable {
                 name: value.as_str().to_string(),
                 properties: vec![],

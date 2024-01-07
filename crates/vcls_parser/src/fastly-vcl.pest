@@ -47,9 +47,9 @@ AclEntryCidr      = _{ "/" ~ AclEntryCidrValue }
 AclEntryCidrValue =  { ASCII_DIGIT+ }
 
 // https://developer.fastly.com/reference/vcl/declarations/backend/
-BackendDeclaration = { "backend" ~ BackendIdent ~ BackendBody }
-BackendIdent       = { Ident }
-BackendBody        = { Object | "none" }
+BackendDeclaration =  { "backend" ~ BackendIdent ~ BackendBody }
+BackendIdent       = _{ Ident }
+BackendBody        = _{ Object }
 
 // https://developer.fastly.com/reference/vcl/declarations/director/
 DirectorDeclaration =  { "director" ~ DirectorIdent ~ DirectorType ~ DirectorBody }
@@ -82,7 +82,7 @@ TableType        = _{ Type }
 TableBody        =  { "{" ~ (TableEntry ~ ("," ~ TableEntry)* ~ ","?)? ~ "}" }
 TableEntry       =  { TableKey ~ ":" ~ TableValue }
 TableKey         =  { String }
-TableValue       =  { Literal | Ident }
+TableValue       =  { String | RTime | Number | Bool | Ident }
 
 // https://developer.fastly.com/reference/vcl/types/string/
 // https://www.varnish-software.com/developers/tutorials/varnish-configuration-language-vcl/#strings
@@ -125,10 +125,10 @@ RTimeUnit     = @{ "ms" | "s" | "m" | "h" | "d" | "y" }
 
 // object
 Object        =  { "{" ~ ObjectEntry* ~ "}" }
-ObjectEntry   =  { ObjectKey ~ "=" ~ ObjectValue ~ ";" }
-ObjectKey     = @{ "." ~ ObjectKeyName }
+ObjectEntry   =  { ObjectKey ~ "=" ~ ObjectValue }
+ObjectKey     =  { "." ~ ObjectKeyName }
 ObjectKeyName =  { Ident }
-ObjectValue   =  { Literal | Ident }
+ObjectValue   = _{ Object | ((String | RTime | Number | Bool | Ident) ~ ";") }
 
 // ident
 Ident = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_")* }

@@ -8,7 +8,16 @@ pub struct Vcl {
     pub declarations: Vec<Declaration>,
 }
 
-pub type Obj = Vec<(String, Literal)>;
+#[derive(Debug, PartialEq, Clone)]
+pub struct Object {
+    pub entries: Vec<(String, ObjectValue)>,
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub enum ObjectValue {
+    Literal(Literal),
+    Ident(String),
+}
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Declaration {
@@ -49,15 +58,15 @@ pub struct AclDeclaration {
 #[derive(Debug, PartialEq, Clone)]
 pub struct BackendDeclaration {
     pub name: String,
-    pub config: Option<Obj>,
+    pub config: Object,
 }
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct DirectorDeclaration {
     pub name: String,
     pub typ: DirectorType,
-    pub config: Option<Obj>,
-    pub directions: Vec<Obj>,
+    pub config: Option<Object>,
+    pub directions: Vec<Object>,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -173,7 +182,7 @@ pub enum Literal {
     Float(f64),
     Bool(bool),
     RTime(RelativeTime),
-    Object(Obj),
+    Object(Object),
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
@@ -234,9 +243,6 @@ impl std::ops::Div<u64> for RelativeTime {
         Self::from_ms(self.ms / rhs)
     }
 }
-
-#[derive(Debug, PartialEq, Clone)]
-pub struct Object {}
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Statement {
@@ -383,7 +389,7 @@ pub struct BinaryExpression {
 #[derive(Debug, PartialEq, Clone)]
 pub enum BinaryOperator {
     /// `==` (Equality)
-
+    Eq,
     /// `!=` (Non-equality)
     Ne,
     /// `<` (Less than)

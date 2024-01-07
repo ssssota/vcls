@@ -1,11 +1,11 @@
 use pest::iterators::Pair;
-use vcls_ast::{Literal, RelativeTime};
+use vcls_ast::RelativeTime;
 
 use crate::{error::ParseError, ParseResult, Rule};
 
-pub fn handle_rtime(pair: Pair<Rule>) -> ParseResult<Literal> {
+pub fn handle(pair: Pair<Rule>) -> ParseResult<RelativeTime> {
     if pair.as_rule() != Rule::RTime {
-        return Err(vec![]);
+        unreachable!()
     }
     let mut inner = pair.into_inner();
     let value = inner
@@ -27,12 +27,12 @@ pub fn handle_rtime(pair: Pair<Rule>) -> ParseResult<Literal> {
         }])?
         .as_str();
     match unit {
-        "ms" => Ok(Literal::RTime(RelativeTime::from_ms(value as u64))),
-        "s" => Ok(Literal::RTime(RelativeTime::from_sec(value))),
-        "m" => Ok(Literal::RTime(RelativeTime::from_min(value))),
-        "h" => Ok(Literal::RTime(RelativeTime::from_hour(value))),
-        "d" => Ok(Literal::RTime(RelativeTime::from_day(value))),
-        "y" => Ok(Literal::RTime(RelativeTime::from_year(value))),
+        "ms" => Ok(RelativeTime::from_ms(value as u64)),
+        "s" => Ok(RelativeTime::from_sec(value)),
+        "m" => Ok(RelativeTime::from_min(value)),
+        "h" => Ok(RelativeTime::from_hour(value)),
+        "d" => Ok(RelativeTime::from_day(value)),
+        "y" => Ok(RelativeTime::from_year(value)),
         _ => unreachable!("Unexpected unit: {}", unit),
     }
 }

@@ -4,9 +4,9 @@ use vcls_ast::Literal;
 use crate::{error::ParseError, ParseResult, Rule};
 
 // TODO: Handle hexadecimals
-pub fn handle_number(pair: Pair<Rule>) -> ParseResult<Literal> {
+pub fn handle(pair: Pair<Rule>) -> ParseResult<Literal> {
     if pair.as_rule() != Rule::Number {
-        return Err(vec![]);
+        unreachable!()
     }
     let num = pair.as_str();
     if num.contains('.') {

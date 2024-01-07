@@ -2,9 +2,9 @@ use pest::iterators::Pair;
 
 use crate::{ParseResult, Rule};
 
-pub fn handle_string(pair: Pair<Rule>) -> ParseResult<String> {
+pub fn handle(pair: Pair<Rule>) -> ParseResult<String> {
     if pair.as_rule() != Rule::String {
-        return Err(vec![]);
+        unreachable!()
     }
     let inner = pair.into_inner();
     let mut tokens = vec![];
@@ -20,7 +20,7 @@ pub fn handle_string(pair: Pair<Rule>) -> ParseResult<String> {
 
 fn handle_string_token(pair: Pair<Rule>) -> ParseResult<String> {
     if pair.as_rule() != Rule::StringToken {
-        return Err(vec![]);
+        unreachable!()
     }
     let inner = pair.into_inner().next().unwrap();
     match inner.as_rule() {
