@@ -4,9 +4,7 @@ use vcls_ast::RelativeTime;
 use crate::{error::ParseError, ParseResult, Rule};
 
 pub fn handle(pair: Pair<Rule>) -> ParseResult<RelativeTime> {
-    if pair.as_rule() != Rule::RTime {
-        unreachable!()
-    }
+    debug_assert!(pair.as_rule() == Rule::RTime);
     let mut inner = pair.into_inner();
     let value = inner
         .find(|p| p.as_rule() == Rule::RTimeValue)

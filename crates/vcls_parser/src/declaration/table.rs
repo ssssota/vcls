@@ -1,12 +1,7 @@
 use pest::iterators::Pair;
 use vcls_ast::{Declaration, TableDeclaration, TableEntry, TableValue, Type, Variable};
 
-use crate::{
-    error::ParseError,
-    literal::{handle_literal, string},
-    utils::skip_comments,
-    ParseResult, Rule,
-};
+use crate::{error::ParseError, literal, literal::string, utils::skip_comments, ParseResult, Rule};
 
 pub fn handle(pair: Pair<Rule>) -> ParseResult<Declaration> {
     let mut inner = skip_comments(pair.into_inner());
@@ -32,9 +27,7 @@ pub fn handle(pair: Pair<Rule>) -> ParseResult<Declaration> {
 }
 
 fn handle_table_body(pair: Pair<Rule>) -> ParseResult<Vec<TableEntry>> {
-    if pair.as_rule() != Rule::TableBody {
-        unreachable!()
-    }
+    debug_assert!(pair.as_rule() == Rule::TableBody);
     let mut entries = vec![];
     let mut errors = vec![];
     for entry in pair.into_inner() {
@@ -55,9 +48,7 @@ fn handle_table_body(pair: Pair<Rule>) -> ParseResult<Vec<TableEntry>> {
 }
 
 fn handle_table_entry(pair: Pair<Rule>) -> ParseResult<TableEntry> {
-    if pair.as_rule() != Rule::TableEntry {
-        unreachable!()
-    }
+    debug_assert!(pair.as_rule() == Rule::TableEntry);
     let mut inner = pair.into_inner();
     let key = string::handle(
         inner
@@ -81,7 +72,7 @@ fn handle_table_entry(pair: Pair<Rule>) -> ParseResult<TableEntry> {
         key,
         value: match value.as_rule() {
             Rule::String | Rule::RTime | Rule::Number | Rule::Bool => {
-                TableValue::Literal(handle_literal(value)?)
+                TableValue::Literal(literal::handle(value)?)
             }
             Rule::Ident => TableValue::Ident(Variable {
                 name: value.as_str().to_string(),

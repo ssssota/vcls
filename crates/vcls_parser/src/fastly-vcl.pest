@@ -69,11 +69,11 @@ RateCounterIdent       = _{ Ident }
 RateCounterBody        =  { "{" ~ "}" }
 
 // https://developer.fastly.com/reference/vcl/declarations/sub/
-SubDeclaration    = { "sub" ~ SubIdent ~ SubType? ~ SubBody }
-SubIdent          = { Ident }
-SubType           = { Type }
-SubBody           = { "{" ~ SubBodyStatements ~ "}" }
-SubBodyStatements = { Statements }
+SubDeclaration    =  { "sub" ~ SubIdent ~ SubType? ~ SubBody }
+SubIdent          = _{ Ident }
+SubType           = _{ Type }
+SubBody           =  { "{" ~ SubBodyStatements ~ "}" }
+SubBodyStatements = _{ Statement* }
 
 // https://developer.fastly.com/reference/vcl/declarations/table/
 TableDeclaration =  { "table" ~ TableIdent ~ TableType? ~ TableBody }
@@ -148,8 +148,7 @@ Type = {
   | "TIME"
 }
 
-Statements = { Statement* }
-Statement  = {
+Statement = {
     IfStatement
   | SetStatement
   | UnsetStatement
@@ -166,49 +165,69 @@ Statement  = {
   | SyntheticBase64Statement
 }
 
-Literal    = { Object | String | RTime | Number | Bool }
-Expression = { Primary+ ~ (BinaryOperator ~ Primary)* }
-Primary    = { FunctionCall | Variable | Literal | "(" ~ Expression ~ ")" | "!" ~ Primary }
+Literal =  { Object | String | RTime | Number | Bool }
+Expr    =  { Prefix* ~ Primary ~ (Infix ~ Prefix* ~ Primary)* }
+Infix   = _{ BinaryOperator }
+Prefix  = _{ OpNot | OpMinus }
+Primary =  { FunctionCall | Concat | "(" ~ Expr ~ ")" }
+Concat  =  { (Literal | Variable)+ }
 
-Variable         =  { Ident ~ VariableProp* }
-VariableProp     =  { "." ~ VariablePropName }
+Variable         =  { Ident ~ VariableProp* ~ SubfieldAccess? }
+VariableProp     = _{ "." ~ VariablePropName }
 VariablePropName = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_" | "-")* }
+SubfieldAccess   = _{ ":" ~ Ident }
 
 FunctionCall     = { Variable ~ "(" ~ FunctionCallArgs? ~ ")" }
-FunctionCallArgs = { Expression ~ ("," ~ Expression)* }
+FunctionCallArgs = { Expr ~ ("," ~ Expr)* }
 
-BinaryOperator = {
-    "=="
-  | "!="
-  | "~"
-  | "!~"
-  | "<"
-  | "<="
-  | ">"
-  | ">="
-  | "&&"
-  | "||"
-  | "+"
-  | "-"
-  | "*"
-  | "/"
+BinaryOperator  = _{
+    OpEq
+  | OpNe
+  | OpRegexMatch
+  | OpRegexNotMatch
+  | OpLe
+  | OpLt
+  | OpGe
+  | OpGt
+  | OpAnd
+  | OpOr
+  | OpAdd
+  | OpSub
+  | OpMul
+  | OpDiv
 }
+OpNot           =  { "!" }
+OpMinus         =  { "-" }
+OpEq            =  { "==" }
+OpNe            =  { "!=" }
+OpRegexMatch    =  { "~" }
+OpRegexNotMatch =  { "!~" }
+OpLe            =  { "<=" }
+OpLt            =  { "<" }
+OpGe            =  { ">=" }
+OpGt            =  { ">" }
+OpAnd           =  { "&&" }
+OpOr            =  { "||" }
+OpAdd           =  { "+" }
+OpSub           =  { "-" }
+OpMul           =  { "*" }
+OpDiv           =  { "/" }
 
 // https://developer.fastly.com/reference/vcl/functions/miscellaneous/if/
 // https://www.varnish-software.com/developers/tutorials/varnish-configuration-language-vcl/#conditionals
-IfStatement   = { "if" ~ IfCondition ~ IfBody ~ IfElseIf* ~ IfElse? }
-IfCondition   = { "(" ~ Expression ~ ")" }
-IfBody        = { "{" ~ Statements ~ "}" }
-IfElseIf      = { ElseIfKeyword ~ IfCondition ~ IfBody }
-ElseIfKeyword = { "elif" | "elsif" | "elseif" | ("else" ~ "if") }
-IfElse        = { "else" ~ IfBody }
+IfStatement   =  { "if" ~ IfCondition ~ IfBody ~ IfElse? }
+IfCondition   = _{ "(" ~ Expr ~ ")" }
+IfBody        =  { "{" ~ Statement* ~ "}" }
+IfElse        =  { ElseIf | Else }
+Else          =  { "else" ~ IfBody }
+ElseIf        =  { ElseIfKeyword ~ IfCondition ~ IfBody ~ IfElse? }
+ElseIfKeyword = _{ "elif" | "elsif" | "elseif" | ("else" ~ "if") }
 
 // https://developer.fastly.com/reference/vcl/statements/set/
-SetStatement   = { "set" ~ SetTarget ~ SetOperator ~ SetValue ~ ";" }
-SetTarget      = { Variable ~ SubfieldAccess? }
-SubfieldAccess = { ":" ~ Ident }
-SetValue       = { Expression }
-SetOperator    = {
+SetStatement =  { "set" ~ SetTarget ~ SetOperator ~ SetValue ~ ";" }
+SetTarget    = _{ Variable }
+SetValue     = _{ Expr }
+SetOperator  =  {
     "="
   | "+="
   | "-="
@@ -233,7 +252,7 @@ UnsetTarget    = { Variable }
 // https://developer.fastly.com/reference/vcl/statements/add/
 AddStatement = { "add" ~ AddTarget ~ "=" ~ AddValue ~ ";" }
 AddTarget    = { Variable }
-AddValue     = { Expression }
+AddValue     = { Expr }
 
 // https://developer.fastly.com/reference/vcl/statements/call/
 CallStatement = { "call" ~ CallTarget ~ ";" }
@@ -257,17 +276,17 @@ IncludeStatement = { IncludeDeclaration }
 
 // https://developer.fastly.com/reference/vcl/statements/log/
 LogStatement = { "log" ~ LogTarget ~ ";" }
-LogTarget    = { Expression }
+LogTarget    = { Expr }
 
 // https://developer.fastly.com/reference/vcl/statements/restart/
 RestartStatement = { "restart" ~ ";" }
 
 // https://developer.fastly.com/reference/vcl/statements/return/
-ReturnStatement = { "return" ~ ReturnValue? ~ ";" }
-ReturnValue     = { Expression }
+ReturnStatement =  { "return" ~ ReturnValue? ~ ";" }
+ReturnValue     = _{ Expr }
 
 // https://developer.fastly.com/reference/vcl/statements/synthetic/
-SyntheticStatement = { "synthetic" ~ SyntheticValue ~ ";" }
-SyntheticValue     = { Expression }
+SyntheticStatement =  { "synthetic" ~ SyntheticValue ~ ";" }
+SyntheticValue     = _{ Expr }
 // https://developer.fastly.com/reference/vcl/statements/synthetic-base64/
 SyntheticBase64Statement = { "synthetic.base64" ~ SyntheticValue ~ ";" }

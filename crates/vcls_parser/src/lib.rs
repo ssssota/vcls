@@ -4,8 +4,11 @@ use vcls_ast::*;
 
 mod declaration;
 mod error;
+mod expression;
 mod literal;
+mod statement;
 mod utils;
+mod variable;
 
 #[derive(pest_derive::Parser)]
 #[grammar = "./fastly-vcl.pest"]
@@ -48,6 +51,10 @@ pub fn parse(src: &str) -> ParseResult<Vcl> {
                 Err(e) => errors.extend(e),
             },
             Rule::BackendDeclaration => match declaration::backend::handle(pair) {
+                Ok(decl) => declarations.push(decl),
+                Err(e) => errors.extend(e),
+            },
+            Rule::SubDeclaration => match declaration::sub::handle(pair) {
                 Ok(decl) => declarations.push(decl),
                 Err(e) => errors.extend(e),
             },
@@ -347,5 +354,156 @@ backend backend_name {
                 })]
             }
         );
+    }
+
+    #[test]
+    fn sub() {
+        assert_eq!(
+            parse("sub foo { return /* noop */; }").unwrap(),
+            Vcl {
+                declarations: vec![Declaration::Subroutine(SubroutineDeclaration {
+                    name: "foo".to_string(),
+                    return_type: Type::Void,
+                    body: vec![Statement::Return(ReturnStatement { value: None })]
+                })]
+            }
+        );
+        assert_eq!(
+            parse("sub foo STRING { return \"foo\" with_variable.bar:baz; }").unwrap(),
+            Vcl {
+                declarations: vec![Declaration::Subroutine(SubroutineDeclaration {
+                    name: "foo".to_string(),
+                    return_type: Type::String,
+                    body: vec![Statement::Return(ReturnStatement {
+                        value: Some(Expression::Binary(BinaryExpression {
+                            lhs: Box::new(Expression::Literal(Literal::String("foo".to_string()))),
+                            operator: BinaryOperator::Add,
+                            rhs: Box::new(Expression::Variable(Variable {
+                                name: "with_variable".to_string(),
+                                properties: vec!["bar".to_string()],
+                                sub_field: Some("baz".to_string())
+                            }))
+                        }))
+                    })]
+                })]
+            }
+        );
+        assert_eq!(
+            parse(
+                "sub vcl_error {
+                    synthetic.base64 \"dGVzdA==\";
+                    synthetic \"foo\";
+                }"
+            )
+            .unwrap(),
+            Vcl {
+                declarations: vec![Declaration::Subroutine(SubroutineDeclaration {
+                    name: "vcl_error".to_string(),
+                    return_type: Type::Void,
+                    body: vec![
+                        Statement::Synthetic(SyntheticStatement {
+                            base64: true,
+                            value: Expression::Literal(Literal::String("dGVzdA==".to_string()))
+                        }),
+                        Statement::Synthetic(SyntheticStatement {
+                            base64: false,
+                            value: Expression::Literal(Literal::String("foo".to_string()))
+                        })
+                    ]
+                })]
+            }
+        );
+        assert_eq!(
+            parse(
+                "sub vcl_recv {
+                    if (req.http.host == \"www.example.com\") {
+                        set req.backend_hint = example_com;
+                    }
+                }"
+            )
+            .unwrap(),
+            Vcl {
+                declarations: vec![Declaration::Subroutine(SubroutineDeclaration {
+                    name: "vcl_recv".to_string(),
+                    return_type: Type::Void,
+                    body: vec![Statement::If(IfStatement {
+                        condition: Expression::Binary(BinaryExpression {
+                            lhs: Box::new(Expression::Variable(Variable {
+                                name: "req".to_string(),
+                                properties: vec!["http".to_string(), "host".to_string()],
+                                sub_field: None
+                            })),
+                            operator: BinaryOperator::Eq,
+                            rhs: Box::new(Expression::Literal(Literal::String(
+                                "www.example.com".to_string()
+                            )))
+                        }),
+                        body: vec![Statement::Set(SetStatement {
+                            target: Variable {
+                                name: "req".to_string(),
+                                properties: vec!["backend_hint".to_string()],
+                                sub_field: None
+                            },
+                            operator: SetOperator::Set,
+                            value: Expression::Variable(Variable {
+                                name: "example_com".to_string(),
+                                properties: vec![],
+                                sub_field: None
+                            })
+                        })],
+                        els: None
+                    })]
+                }),]
+            }
+        )
+
+        // sub vcl_recv {
+        //     if (req.http.host == \"www.example.com\") {
+        //         set req.backend_hint = example_com;
+        //     }
+        //     declare local var.count INTEGER;
+        //     set var.count = 0;
+        //     // comment
+        //     if (var.count != 0) {
+        //         set var.count = var.count + 1;
+        //     } elif (var.count > 1) {  set var.count += 1; }
+        //      elsif (var.count >= 2) {
+        //         set var.count *= 2;
+        //     } elseif (var.count < 3) {
+        //         set var.count /= 3;
+        //     } else if (var.count <= 4) {
+        //         set var.count %= 4;
+        //     } else {
+        //         set var.count -= 1;
+        //     }
+        //     set var.count |= 1 + 2 * 3 / 4;
+        //     set var.count &= 1;
+        //     set var.count ^= 1;
+        //     set var.count <<= 1;
+        //     set var.count >>= 1;
+        //     set var.count ror= 1;
+        //     set var.count rol= 1;
+        //     set var.count &&= 1;
+        //     set var.count ||= 1;
+        //     call redirect;
+        //     declare local var.foo STRING;
+        //     set var.foo = fun(var.count);
+
+        //     include \"bar.vcl\";
+
+        //     if (var.foo == \"foo\" && var.foo != \"bar\" || var.foo ~ \"^foo\") {
+        //         error 503 \"foo\";
+        //     }
+        //     log var.foo \"bar\" + \"baz\";
+
+        //     if (req.url ~ \"^/foo\") {
+        //         restart;
+        //     } else if (req.url !~ \"^/bar\") {
+        //         return (pass);
+        //     }
+
+        //     esi;
+        //     return (pass);
+        // }
     }
 }

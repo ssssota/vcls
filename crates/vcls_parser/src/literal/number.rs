@@ -5,9 +5,7 @@ use crate::{error::ParseError, ParseResult, Rule};
 
 // TODO: Handle hexadecimals
 pub fn handle(pair: Pair<Rule>) -> ParseResult<Literal> {
-    if pair.as_rule() != Rule::Number {
-        unreachable!()
-    }
+    debug_assert!(pair.as_rule() == Rule::Number);
     let num = pair.as_str();
     if num.contains('.') {
         Ok(Literal::Float(num.parse().map_err(|e| {

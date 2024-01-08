@@ -8,9 +8,9 @@ pub mod object;
 pub mod rtime;
 pub mod string;
 
-pub fn handle_literal(pair: Pair<Rule>) -> ParseResult<Literal> {
+pub fn handle(pair: Pair<Rule>) -> ParseResult<Literal> {
     match pair.as_rule() {
-        Rule::Literal => handle_literal(
+        Rule::Literal => handle(
             pair.into_inner()
                 .find(|p| p.as_rule() != Rule::COMMENT)
                 .unwrap(),

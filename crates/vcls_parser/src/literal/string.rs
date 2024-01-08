@@ -3,9 +3,7 @@ use pest::iterators::Pair;
 use crate::{ParseResult, Rule};
 
 pub fn handle(pair: Pair<Rule>) -> ParseResult<String> {
-    if pair.as_rule() != Rule::String {
-        unreachable!()
-    }
+    debug_assert!(pair.as_rule() == Rule::String);
     let inner = pair.into_inner();
     let mut tokens = vec![];
     for pair in inner {
@@ -19,9 +17,7 @@ pub fn handle(pair: Pair<Rule>) -> ParseResult<String> {
 }
 
 fn handle_string_token(pair: Pair<Rule>) -> ParseResult<String> {
-    if pair.as_rule() != Rule::StringToken {
-        unreachable!()
-    }
+    debug_assert!(pair.as_rule() == Rule::StringToken);
     let inner = pair.into_inner().next().unwrap();
     match inner.as_rule() {
         Rule::EmptyString => Ok("".to_string()),
@@ -34,9 +30,6 @@ fn handle_string_token(pair: Pair<Rule>) -> ParseResult<String> {
             let quote_len = quoted.find('"').unwrap() + 1;
             Ok(quoted[quote_len..quoted.len() - quote_len].to_string())
         }
-        _ => {
-            println!("{:?}", inner);
-            Ok("".to_string())
-        } // _ => unreachable!("Unexpected token: {}", inner.as_str()),
+        _ => unreachable!("Unexpected token: {}", inner.as_str()),
     }
 }

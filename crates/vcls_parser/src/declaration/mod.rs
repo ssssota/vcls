@@ -4,4 +4,5 @@ pub mod import;
 pub mod include;
 pub mod penaltybox;
 pub mod ratecounter;
+pub mod sub;
 pub mod table;

@@ -8,9 +8,7 @@ use crate::{
 };
 
 pub fn handle(pair: Pair<Rule>) -> ParseResult<Object> {
-    if pair.as_rule() != Rule::Object {
-        unreachable!()
-    }
+    debug_assert!(pair.as_rule() == Rule::Object);
     let inner = pair.into_inner();
     let mut entries = vec![];
     let mut errors = vec![];
@@ -33,9 +31,7 @@ pub fn handle(pair: Pair<Rule>) -> ParseResult<Object> {
 }
 
 pub fn handle_object_entry(pair: Pair<Rule>) -> ParseResult<(String, ObjectValue)> {
-    if pair.as_rule() != Rule::ObjectEntry {
-        unreachable!()
-    }
+    debug_assert!(pair.as_rule() == Rule::ObjectEntry);
     let mut inner = pair.into_inner();
     let key = inner
         .find(|p| p.as_rule() == Rule::ObjectKey)

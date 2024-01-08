@@ -265,14 +265,13 @@ pub enum Statement {
 pub struct IfStatement {
     pub condition: Expression,
     pub body: Vec<Statement>,
-    pub else_ifs: Vec<ElseIfStatement>,
-    pub else_: Option<Vec<Statement>>,
+    pub els: Option<ElseStatement>,
 }
 
 #[derive(Debug, PartialEq, Clone)]
-pub struct ElseIfStatement {
-    pub condition: Expression,
-    pub body: Vec<Statement>,
+pub enum ElseStatement {
+    If(Box<IfStatement>),
+    Body(Vec<Statement>),
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -299,6 +298,31 @@ pub enum SetOperator {
     Rol,
     AmpAmp,
     BarBar,
+}
+
+impl FromStr for SetOperator {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "=" => Ok(Self::Set),
+            "+=" => Ok(Self::Add),
+            "-=" => Ok(Self::Sub),
+            "*=" => Ok(Self::Mul),
+            "/=" => Ok(Self::Div),
+            "%=" => Ok(Self::Mod),
+            "&=" => Ok(Self::Amp),
+            "|=" => Ok(Self::Bar),
+            "^=" => Ok(Self::Hat),
+            "<<=" => Ok(Self::LShift),
+            ">>=" => Ok(Self::RShift),
+            "ror=" => Ok(Self::Ror),
+            "rol=" => Ok(Self::Rol),
+            "&&=" => Ok(Self::AmpAmp),
+            "||=" => Ok(Self::BarBar),
+            _ => Err(()),
+        }
+    }
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -359,7 +383,7 @@ pub struct ReturnStatement {
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct SyntheticStatement {
-    pub value: Option<Expression>,
+    pub value: Expression,
     pub base64: bool,
 }
 
