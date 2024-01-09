@@ -4,7 +4,7 @@ use pest::{
     iterators::Pair,
     pratt_parser::{Assoc, Op, PrattParser},
 };
-use vcls_ast::{BinaryExpression, BinaryOperator, Expression};
+use vcls_ast::{BinaryExpression, BinaryOperator, Expression, Literal};
 
 use crate::{literal, variable, ParseResult, Rule};
 
@@ -41,6 +41,21 @@ pub fn handle(pair: Pair<Rule>) -> ParseResult<Expression> {
                 operator: BinaryOperator::Eq,
                 rhs: Box::new(rhs?),
             })),
+            Rule::OpNe => Ok(Expression::Binary(BinaryExpression {
+                lhs: Box::new(lhs?),
+                operator: BinaryOperator::Ne,
+                rhs: Box::new(rhs?),
+            })),
+            Rule::OpRegexMatch => Ok(Expression::Binary(BinaryExpression {
+                lhs: Box::new(lhs?),
+                operator: BinaryOperator::Tilde,
+                rhs: Box::new(rhs?),
+            })),
+            Rule::OpRegexNotMatch => Ok(Expression::Binary(BinaryExpression {
+                lhs: Box::new(lhs?),
+                operator: BinaryOperator::NotTilde,
+                rhs: Box::new(rhs?),
+            })),
             _ => unimplemented!("Not implemented: {:?}", p.as_rule()),
         })
         .parse(pair.into_inner())
@@ -49,19 +64,21 @@ pub fn handle(pair: Pair<Rule>) -> ParseResult<Expression> {
 fn handle_primary(pair: Pair<Rule>) -> ParseResult<Expression> {
     debug_assert!(pair.as_rule() == Rule::Primary);
     let inner = pair.into_inner();
-    let mut errors = vec![];
     for pair in inner {
         match pair.as_rule() {
-            Rule::FunctionCall => todo!("Function call"),
-            Rule::Concat => match handle_concat(pair) {
-                Ok(c) => return Ok(c),
-                Err(e) => errors.extend(e),
-            },
-            Rule::Expr => return handle(pair),
+            Rule::Literal => {
+                return Ok(literal::handle(pair).map(|l| Expression::Literal(l))?);
+            }
+            Rule::Concat => {
+                return handle_concat(pair);
+            }
+            Rule::Expr => {
+                return handle(pair);
+            }
             _ => unreachable!("Unexpected rule: {:?}", pair.as_rule()),
         }
     }
-    Err(errors)
+    unreachable!("No primary found")
 }
 
 fn handle_concat(pair: Pair<Rule>) -> ParseResult<Expression> {
@@ -71,8 +88,8 @@ fn handle_concat(pair: Pair<Rule>) -> ParseResult<Expression> {
     let mut errors = vec![];
     for pair in inner {
         match pair.as_rule() {
-            Rule::Literal => match literal::handle(pair) {
-                Ok(l) => tokens.push(Expression::Literal(l)),
+            Rule::String => match literal::string::handle(pair) {
+                Ok(s) => tokens.push(Expression::Literal(Literal::String(s))),
                 Err(e) => errors.extend(e),
             },
             Rule::Variable => match variable::handle(pair) {

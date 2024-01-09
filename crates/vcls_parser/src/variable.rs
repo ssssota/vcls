@@ -15,9 +15,9 @@ pub fn handle(pair: Pair<Rule>) -> ParseResult<Variable> {
     let mut sub_field = None;
     for pair in inner {
         match pair.as_rule() {
-            Rule::VariablePropName => properties.push(pair.as_str().to_string()),
-            Rule::Ident => {
-                sub_field = Some(pair.as_str().to_string());
+            Rule::VariableProp => properties.push(pair.as_str()[1..].to_string()),
+            Rule::SubfieldAccess => {
+                sub_field = Some(pair.as_str()[1..].to_string());
             }
             Rule::COMMENT => {}
             _ => unreachable!("Unexpected rule: {:?}", pair.as_rule()),

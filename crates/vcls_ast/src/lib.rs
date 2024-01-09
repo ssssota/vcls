@@ -328,13 +328,6 @@ impl FromStr for SetOperator {
 #[derive(Debug, PartialEq, Clone)]
 pub struct UnsetStatement {
     pub target: Variable,
-    pub keyword: UnsetKeyword,
-}
-
-#[derive(Debug, PartialEq, Clone)]
-pub enum UnsetKeyword {
-    Unset,
-    Remove,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -345,7 +338,7 @@ pub struct AddStatement {
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct CallStatement {
-    pub target: String,
+    pub target: Variable,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -356,8 +349,8 @@ pub struct DeclareStatement {
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct ErrorStatement {
-    pub status: Option<u8>,
-    pub message: Option<String>,
+    pub status: Option<Expression>,
+    pub message: Option<Expression>,
 }
 
 #[derive(Debug, PartialEq, Clone)]

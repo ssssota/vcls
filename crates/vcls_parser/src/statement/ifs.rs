@@ -4,7 +4,7 @@ use vcls_ast::{ElseStatement, IfStatement, Statement};
 use crate::{expression, statement, ParseResult, Rule};
 
 pub fn handle(pair: Pair<Rule>) -> ParseResult<IfStatement> {
-    debug_assert!(pair.as_rule() == Rule::IfStatement);
+    debug_assert!(pair.as_rule() == Rule::IfStatement || pair.as_rule() == Rule::ElseIf);
     let mut inner = pair.into_inner();
     let condition = expression::handle(inner.find(|p| p.as_rule() == Rule::Expr).unwrap())?;
     let body = handle_body(inner.find(|p| p.as_rule() == Rule::IfBody).unwrap())?;
@@ -31,11 +31,7 @@ fn handle_else(pair: Pair<Rule>) -> ParseResult<Option<ElseStatement>> {
                 )?)));
             }
             Rule::ElseIf => {
-                return Ok(Some(ElseStatement::If(Box::new(handle(
-                    pair.into_inner()
-                        .find(|p| p.as_rule() == Rule::IfStatement)
-                        .unwrap(),
-                )?))));
+                return Ok(Some(ElseStatement::If(Box::new(handle(pair)?))));
             }
             Rule::COMMENT => {}
             _ => unreachable!("Unexpected rule: {:?}", pair.as_rule()),

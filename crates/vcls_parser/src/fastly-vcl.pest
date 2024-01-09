@@ -169,13 +169,13 @@ Literal =  { Object | String | RTime | Number | Bool }
 Expr    =  { Prefix* ~ Primary ~ (Infix ~ Prefix* ~ Primary)* }
 Infix   = _{ BinaryOperator }
 Prefix  = _{ OpNot | OpMinus }
-Primary =  { FunctionCall | Concat | "(" ~ Expr ~ ")" }
-Concat  =  { (Literal | Variable)+ }
+Primary =  { Concat | Literal | "(" ~ Expr ~ ")" }
+Concat  =  { (FunctionCall | String | Variable)+ }
 
 Variable         =  { Ident ~ VariableProp* ~ SubfieldAccess? }
-VariableProp     = _{ "." ~ VariablePropName }
+VariableProp     = @{ "." ~ VariablePropName }
 VariablePropName = @{ ASCII_ALPHA ~ (ASCII_ALPHANUMERIC | "_" | "-")* }
-SubfieldAccess   = _{ ":" ~ Ident }
+SubfieldAccess   = @{ ":" ~ Ident }
 
 FunctionCall     = { Variable ~ "(" ~ FunctionCallArgs? ~ ")" }
 FunctionCallArgs = { Expr ~ ("," ~ Expr)* }
@@ -246,8 +246,8 @@ SetOperator  =  {
 }
 
 // https://developer.fastly.com/reference/vcl/statements/unset/
-UnsetStatement = { ("unset" | "remove") ~ UnsetTarget ~ ";" }
-UnsetTarget    = { Variable }
+UnsetStatement =  { ("unset" | "remove") ~ UnsetTarget ~ ";" }
+UnsetTarget    = _{ Variable }
 
 // https://developer.fastly.com/reference/vcl/statements/add/
 AddStatement = { "add" ~ AddTarget ~ "=" ~ AddValue ~ ";" }
@@ -255,18 +255,19 @@ AddTarget    = { Variable }
 AddValue     = { Expr }
 
 // https://developer.fastly.com/reference/vcl/statements/call/
-CallStatement = { "call" ~ CallTarget ~ ";" }
-CallTarget    = { Ident }
+CallStatement =  { "call" ~ CallTarget ~ ";" }
+CallTarget    = _{ Ident }
 
 // https://developer.fastly.com/reference/vcl/statements/declare/
-DeclareStatement = { "declare" ~ "local" ~ DeclareTarget ~ DeclareType ~ ";" }
-DeclareTarget    = { Variable }
-DeclareType      = { Type }
+DeclareStatement =  { "declare" ~ "local" ~ DeclareTarget ~ DeclareType ~ ";" }
+DeclareTarget    = _{ Variable }
+DeclareType      = _{ Type }
 
 // https://developer.fastly.com/reference/vcl/statements/error/
-ErrorStatement = { "error" ~ ErrorCode? ~ ErrorMessage? ~ ";" }
-ErrorCode      = { Number }
-ErrorMessage   = { StringToken }
+ErrorStatement =  { "error" ~ ErrorInfo? ~ ";" }
+ErrorInfo      =  { ErrorCode ~ ErrorMessage? }
+ErrorCode      = _{ Expr }
+ErrorMessage   = _{ Expr }
 
 // https://developer.fastly.com/reference/vcl/statements/esi/
 EsiStatement = { "esi" ~ ";" }

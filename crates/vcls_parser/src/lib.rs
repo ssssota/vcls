@@ -455,36 +455,336 @@ backend backend_name {
                     })]
                 }),]
             }
-        )
+        );
+        assert_eq!(
+            parse(
+                "sub vcl_recv {
+                    if (req.http.host == \"www.example.com\") {}
+                    elif (req.http.host ~ \".*\\.example\\.com\") {}
+                    elsif (req.http.host == \"example.com\") {}
+                    elseif (req.http.host !~ \"example\\.com\") {}
+                    else if (req.http.host != \"example.com\") {}
+                    else {}
+                }"
+            )
+            .unwrap(),
+            Vcl {
+                declarations: vec![Declaration::Subroutine(SubroutineDeclaration {
+                    name: "vcl_recv".to_string(),
+                    return_type: Type::Void,
+                    body: vec![Statement::If(IfStatement {
+                        // if (req.http.host == \"www.example.com\") {}
+                        condition: Expression::Binary(BinaryExpression {
+                            lhs: Box::new(Expression::Variable(Variable {
+                                name: "req".to_string(),
+                                properties: vec!["http".to_string(), "host".to_string()],
+                                sub_field: None
+                            })),
+                            operator: BinaryOperator::Eq,
+                            rhs: Box::new(Expression::Literal(Literal::String(
+                                "www.example.com".to_string()
+                            )))
+                        }),
+                        body: vec![],
+                        els: Some(ElseStatement::If(Box::new(IfStatement {
+                            // elif (req.http.host ~ \".*\\.example\\.com\") {}
+                            condition: Expression::Binary(BinaryExpression {
+                                lhs: Box::new(Expression::Variable(Variable {
+                                    name: "req".to_string(),
+                                    properties: vec!["http".to_string(), "host".to_string()],
+                                    sub_field: None
+                                })),
+                                operator: BinaryOperator::Tilde,
+                                rhs: Box::new(Expression::Literal(Literal::String(
+                                    ".*\\.example\\.com".to_string()
+                                )))
+                            }),
+                            body: vec![],
+                            els: Some(ElseStatement::If(Box::new(IfStatement {
+                                // elsif (req.http.host == \"example.com\") {}
+                                condition: Expression::Binary(BinaryExpression {
+                                    lhs: Box::new(Expression::Variable(Variable {
+                                        name: "req".to_string(),
+                                        properties: vec!["http".to_string(), "host".to_string()],
+                                        sub_field: None
+                                    })),
+                                    operator: BinaryOperator::Eq,
+                                    rhs: Box::new(Expression::Literal(Literal::String(
+                                        "example.com".to_string()
+                                    )))
+                                }),
+                                body: vec![],
+                                els: Some(ElseStatement::If(Box::new(IfStatement {
+                                    // elseif (req.http.host !~ \"example\\.com\") {}
+                                    condition: Expression::Binary(BinaryExpression {
+                                        lhs: Box::new(Expression::Variable(Variable {
+                                            name: "req".to_string(),
+                                            properties: vec![
+                                                "http".to_string(),
+                                                "host".to_string()
+                                            ],
+                                            sub_field: None
+                                        })),
+                                        operator: BinaryOperator::NotTilde,
+                                        rhs: Box::new(Expression::Literal(Literal::String(
+                                            "example\\.com".to_string()
+                                        )))
+                                    }),
+                                    body: vec![],
+                                    els: Some(ElseStatement::If(Box::new(IfStatement {
+                                        // else if (req.http.host != \"example.com\") {}
+                                        condition: Expression::Binary(BinaryExpression {
+                                            lhs: Box::new(Expression::Variable(Variable {
+                                                name: "req".to_string(),
+                                                properties: vec![
+                                                    "http".to_string(),
+                                                    "host".to_string()
+                                                ],
+                                                sub_field: None
+                                            })),
+                                            operator: BinaryOperator::Ne,
+                                            rhs: Box::new(Expression::Literal(Literal::String(
+                                                "example.com".to_string()
+                                            )))
+                                        }),
+                                        body: vec![],
+                                        els: Some(ElseStatement::Body(vec![]))
+                                    })))
+                                })))
+                            })))
+                        })))
+                    })]
+                })]
+            }
+        );
+        assert_eq!(
+            parse(
+                "sub vcl_recv {
+                    declare local var.test INTEGER;
+                    set var.test = 0;
+                    set var.test += 2;
+                    set var.test -= 1;
+                    set var.test *= 4;
+                    set var.test /= 2;
+                    set var.test %= 3;
+                    set var.test |= 1;
+                    set var.test &= 1;
+                    set var.test ^= 2;
+                    set var.test <<= 1;
+                    set var.test >>= 1;
+                    set var.test ror= 1;
+                    set var.test rol= 1;
+                    set var.test &&= 1;
+                    set var.test ||= 1;
+                    unset var.test;
+                }"
+            )
+            .unwrap(),
+            Vcl {
+                declarations: vec![Declaration::Subroutine(SubroutineDeclaration {
+                    name: "vcl_recv".to_string(),
+                    return_type: Type::Void,
+                    body: vec![
+                        Statement::Declare(DeclareStatement {
+                            target: Variable {
+                                name: "var".to_string(),
+                                properties: vec!["test".to_string()],
+                                sub_field: None
+                            },
+                            typ: Type::Integer
+                        }),
+                        Statement::Set(SetStatement {
+                            target: Variable {
+                                name: "var".to_string(),
+                                properties: vec!["test".to_string()],
+                                sub_field: None
+                            },
+                            operator: SetOperator::Set,
+                            value: Expression::Literal(Literal::Integer(0))
+                        }),
+                        Statement::Set(SetStatement {
+                            target: Variable {
+                                name: "var".to_string(),
+                                properties: vec!["test".to_string()],
+                                sub_field: None
+                            },
+                            operator: SetOperator::Add,
+                            value: Expression::Literal(Literal::Integer(2))
+                        }),
+                        Statement::Set(SetStatement {
+                            target: Variable {
+                                name: "var".to_string(),
+                                properties: vec!["test".to_string()],
+                                sub_field: None
+                            },
+                            operator: SetOperator::Sub,
+                            value: Expression::Literal(Literal::Integer(1))
+                        }),
+                        Statement::Set(SetStatement {
+                            target: Variable {
+                                name: "var".to_string(),
+                                properties: vec!["test".to_string()],
+                                sub_field: None
+                            },
+                            operator: SetOperator::Mul,
+                            value: Expression::Literal(Literal::Integer(4))
+                        }),
+                        Statement::Set(SetStatement {
+                            target: Variable {
+                                name: "var".to_string(),
+                                properties: vec!["test".to_string()],
+                                sub_field: None
+                            },
+                            operator: SetOperator::Div,
+                            value: Expression::Literal(Literal::Integer(2))
+                        }),
+                        Statement::Set(SetStatement {
+                            target: Variable {
+                                name: "var".to_string(),
+                                properties: vec!["test".to_string()],
+                                sub_field: None
+                            },
+                            operator: SetOperator::Mod,
+                            value: Expression::Literal(Literal::Integer(3))
+                        }),
+                        Statement::Set(SetStatement {
+                            target: Variable {
+                                name: "var".to_string(),
+                                properties: vec!["test".to_string()],
+                                sub_field: None
+                            },
+                            operator: SetOperator::Bar,
+                            value: Expression::Literal(Literal::Integer(1))
+                        }),
+                        Statement::Set(SetStatement {
+                            target: Variable {
+                                name: "var".to_string(),
+                                properties: vec!["test".to_string()],
+                                sub_field: None
+                            },
+                            operator: SetOperator::Amp,
+                            value: Expression::Literal(Literal::Integer(1))
+                        }),
+                        Statement::Set(SetStatement {
+                            target: Variable {
+                                name: "var".to_string(),
+                                properties: vec!["test".to_string()],
+                                sub_field: None
+                            },
+                            operator: SetOperator::Hat,
+                            value: Expression::Literal(Literal::Integer(2))
+                        }),
+                        Statement::Set(SetStatement {
+                            target: Variable {
+                                name: "var".to_string(),
+                                properties: vec!["test".to_string()],
+                                sub_field: None
+                            },
+                            operator: SetOperator::LShift,
+                            value: Expression::Literal(Literal::Integer(1))
+                        }),
+                        Statement::Set(SetStatement {
+                            target: Variable {
+                                name: "var".to_string(),
+                                properties: vec!["test".to_string()],
+                                sub_field: None
+                            },
+                            operator: SetOperator::RShift,
+                            value: Expression::Literal(Literal::Integer(1))
+                        }),
+                        Statement::Set(SetStatement {
+                            target: Variable {
+                                name: "var".to_string(),
+                                properties: vec!["test".to_string()],
+                                sub_field: None
+                            },
+                            operator: SetOperator::Ror,
+                            value: Expression::Literal(Literal::Integer(1))
+                        }),
+                        Statement::Set(SetStatement {
+                            target: Variable {
+                                name: "var".to_string(),
+                                properties: vec!["test".to_string()],
+                                sub_field: None
+                            },
+                            operator: SetOperator::Rol,
+                            value: Expression::Literal(Literal::Integer(1))
+                        }),
+                        Statement::Set(SetStatement {
+                            target: Variable {
+                                name: "var".to_string(),
+                                properties: vec!["test".to_string(),],
+                                sub_field: None
+                            },
+                            operator: SetOperator::AmpAmp,
+                            value: Expression::Literal(Literal::Integer(1))
+                        }),
+                        Statement::Set(SetStatement {
+                            target: Variable {
+                                name: "var".to_string(),
+                                properties: vec!["test".to_string(),],
+                                sub_field: None
+                            },
+                            operator: SetOperator::BarBar,
+                            value: Expression::Literal(Literal::Integer(1))
+                        }),
+                        Statement::Unset(UnsetStatement {
+                            target: Variable {
+                                name: "var".to_string(),
+                                properties: vec!["test".to_string(),],
+                                sub_field: None
+                            },
+                        })
+                    ]
+                })]
+            }
+        );
+        assert_eq!(
+            parse(
+                "sub vcl_recv {
+                    esi;
+                    call foo;
+                    error 503 \"foo\";
+                    error bar;
+                    error;
+                }"
+            )
+            .unwrap(),
+            Vcl {
+                declarations: vec![Declaration::Subroutine(SubroutineDeclaration {
+                    name: "vcl_recv".to_string(),
+                    return_type: Type::Void,
+                    body: vec![
+                        Statement::Esi(EsiStatement),
+                        Statement::Call(CallStatement {
+                            target: Variable {
+                                name: "foo".to_string(),
+                                properties: vec![],
+                                sub_field: None
+                            }
+                        }),
+                        Statement::Error(ErrorStatement {
+                            status: Some(Expression::Literal(Literal::Integer(503))),
+                            message: Some(Expression::Literal(Literal::String("foo".to_string())))
+                        }),
+                        Statement::Error(ErrorStatement {
+                            status: Some(Expression::Variable(Variable {
+                                name: "bar".to_string(),
+                                properties: vec![],
+                                sub_field: None
+                            })),
+                            message: None
+                        }),
+                        Statement::Error(ErrorStatement {
+                            status: None,
+                            message: None
+                        })
+                    ]
+                })]
+            }
+        );
 
         // sub vcl_recv {
-        //     if (req.http.host == \"www.example.com\") {
-        //         set req.backend_hint = example_com;
-        //     }
-        //     declare local var.count INTEGER;
-        //     set var.count = 0;
-        //     // comment
-        //     if (var.count != 0) {
-        //         set var.count = var.count + 1;
-        //     } elif (var.count > 1) {  set var.count += 1; }
-        //      elsif (var.count >= 2) {
-        //         set var.count *= 2;
-        //     } elseif (var.count < 3) {
-        //         set var.count /= 3;
-        //     } else if (var.count <= 4) {
-        //         set var.count %= 4;
-        //     } else {
-        //         set var.count -= 1;
-        //     }
-        //     set var.count |= 1 + 2 * 3 / 4;
-        //     set var.count &= 1;
-        //     set var.count ^= 1;
-        //     set var.count <<= 1;
-        //     set var.count >>= 1;
-        //     set var.count ror= 1;
-        //     set var.count rol= 1;
-        //     set var.count &&= 1;
-        //     set var.count ||= 1;
         //     call redirect;
         //     declare local var.foo STRING;
         //     set var.foo = fun(var.count);
