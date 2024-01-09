@@ -43,7 +43,7 @@ pub fn handle(pair: Pair<Rule>) -> ParseResult<Expression> {
                 operator: UnaryOperator::Neg,
                 rhs: Box::new(rhs?),
             })),
-            _ => unimplemented!("Not implemented: {:?}", p.as_rule()),
+            _ => unreachable!("Unexpected token: {:?}", p.as_str()),
         })
         .map_infix(|lhs, p, rhs| match p.as_rule() {
             Rule::OpEq => Ok(Expression::Binary(BinaryExpression {
@@ -66,7 +66,7 @@ pub fn handle(pair: Pair<Rule>) -> ParseResult<Expression> {
                 operator: BinaryOperator::NotTilde,
                 rhs: Box::new(rhs?),
             })),
-            _ => unimplemented!("Not implemented: {:?}", p.as_rule()),
+            _ => unreachable!("Unexpected token: {:?}", p.as_str()),
         })
         .parse(pair.into_inner())
 }
@@ -79,6 +79,7 @@ fn handle_primary(pair: Pair<Rule>) -> ParseResult<Expression> {
             Rule::Literal => return literal::handle(pair).map(Expression::Literal),
             Rule::Concat => return handle_concat(pair),
             Rule::Expr => return handle(pair),
+            Rule::COMMENT => {}
             _ => unreachable!("Unexpected rule: {:?}", pair.as_rule()),
         }
     }
@@ -100,6 +101,7 @@ fn handle_concat(pair: Pair<Rule>) -> ParseResult<Expression> {
                 Ok(v) => tokens.push(Expression::Variable(v)),
                 Err(e) => errors.extend(e),
             },
+            Rule::COMMENT => {}
             _ => unreachable!("Unexpected rule: {:?}", pair.as_rule()),
         }
     }
