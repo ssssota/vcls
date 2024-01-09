@@ -1,10 +1,15 @@
 use pest::iterators::Pair;
-use vcls_ast::IncludeDeclaration;
+use vcls_ast::IncludeStatement;
 
 use crate::{error::ParseError, utils::remove_quotes, ParseResult, Rule};
 
-pub fn handle(pair: Pair<Rule>) -> ParseResult<IncludeDeclaration> {
-    let mut inner = pair.into_inner();
+pub fn handle(pair: Pair<Rule>) -> ParseResult<IncludeStatement> {
+    debug_assert!(pair.as_rule() == Rule::IncludeStatement);
+    let mut inner = pair
+        .into_inner()
+        .find(|p| p.as_rule() == Rule::IncludeDeclaration)
+        .unwrap()
+        .into_inner();
     let quoted_path = inner
         .find(|p| p.as_rule() == Rule::QuotedString)
         .ok_or(vec![ParseError {
@@ -12,5 +17,5 @@ pub fn handle(pair: Pair<Rule>) -> ParseResult<IncludeDeclaration> {
         }])?
         .as_str();
     let path = remove_quotes(quoted_path);
-    Ok(IncludeDeclaration { path })
+    Ok(IncludeStatement { path })
 }

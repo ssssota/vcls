@@ -26,37 +26,9 @@ pub fn parse(src: &str) -> ParseResult<Vcl> {
     let mut declarations = vec![];
     for pair in pairs {
         match pair.as_rule() {
-            Rule::IncludeDeclaration => match declaration::include::handle(pair) {
-                Ok(decl) => declarations.push(decl),
-                Err(e) => errors.extend(e),
-            },
-            Rule::ImportDeclaration => match declaration::import::handle(pair) {
-                Ok(decl) => declarations.push(decl),
-                Err(e) => errors.extend(e),
-            },
-            Rule::AclDeclaration => match declaration::acl::handle(pair) {
-                Ok(decl) => declarations.push(decl),
-                Err(e) => errors.extend(e),
-            },
-            Rule::PenaltyboxDeclaration => match declaration::penaltybox::handle(pair) {
-                Ok(decl) => declarations.push(decl),
-                Err(e) => errors.extend(e),
-            },
-            Rule::RateCounterDeclaration => match declaration::ratecounter::handle(pair) {
-                Ok(decl) => declarations.push(decl),
-                Err(e) => errors.extend(e),
-            },
-            Rule::TableDeclaration => match declaration::table::handle(pair) {
-                Ok(decl) => declarations.push(decl),
-                Err(e) => errors.extend(e),
-            },
-            Rule::BackendDeclaration => match declaration::backend::handle(pair) {
-                Ok(decl) => declarations.push(decl),
-                Err(e) => errors.extend(e),
-            },
-            Rule::SubDeclaration => match declaration::sub::handle(pair) {
-                Ok(decl) => declarations.push(decl),
-                Err(e) => errors.extend(e),
+            Rule::Declaration => match declaration::handle(pair) {
+                Ok(declaration) => declarations.push(declaration),
+                Err(mut err) => errors.append(&mut err),
             },
             Rule::EOI => {}
             _ => unreachable!("Unexpected rule: {:?}", pair.as_rule()),
@@ -747,6 +719,7 @@ backend backend_name {
                     error 503 \"foo\";
                     error bar;
                     error;
+                    restart;
                 }"
             )
             .unwrap(),
@@ -778,32 +751,57 @@ backend backend_name {
                         Statement::Error(ErrorStatement {
                             status: None,
                             message: None
-                        })
+                        }),
+                        Statement::Restart(RestartStatement),
                     ]
                 })]
             }
         );
-
-        // sub vcl_recv {
-        //     call redirect;
-        //     declare local var.foo STRING;
-        //     set var.foo = fun(var.count);
-
-        //     include \"bar.vcl\";
-
-        //     if (var.foo == \"foo\" && var.foo != \"bar\" || var.foo ~ \"^foo\") {
-        //         error 503 \"foo\";
-        //     }
-        //     log var.foo \"bar\" + \"baz\";
-
-        //     if (req.url ~ \"^/foo\") {
-        //         restart;
-        //     } else if (req.url !~ \"^/bar\") {
-        //         return (pass);
-        //     }
-
-        //     esi;
-        //     return (pass);
-        // }
+        assert_eq!(
+            parse(
+                "sub vcl_recv {
+                    include \"foo.vcl\";
+                }"
+            )
+            .unwrap(),
+            Vcl {
+                declarations: vec![Declaration::Subroutine(SubroutineDeclaration {
+                    name: "vcl_recv".to_string(),
+                    return_type: Type::Void,
+                    body: vec![Statement::Include(IncludeStatement {
+                        path: "foo.vcl".to_string()
+                    })]
+                })]
+            }
+        );
+        assert_eq!(
+            parse(
+                "sub vcl_deliver {
+                log \"foo\";
+                add resp.http.Set-Cookie = \"myCookie=foo; path=/; SameSite=Strict; Secure; max-age=60\";
+            }"
+        ).unwrap(),
+            Vcl {
+                declarations: vec![Declaration::Subroutine(SubroutineDeclaration {
+                    name: "vcl_deliver".to_string(),
+                    return_type: Type::Void,
+                    body: vec![
+                        Statement::Log(LogStatement {
+                            message: Expression::Literal(Literal::String("foo".to_string()))
+                        }),
+                        Statement::Add(AddStatement {
+                            target: Variable {
+                                name: "resp".to_string(),
+                                properties: vec!["http".to_string(), "Set-Cookie".to_string()],
+                                sub_field: None
+                            },
+                            value: Expression::Literal(Literal::String(
+                                "myCookie=foo; path=/; SameSite=Strict; Secure; max-age=60".to_string()
+                            ))
+                        })
+                    ]
+                })]
+            }
+        )
     }
 }

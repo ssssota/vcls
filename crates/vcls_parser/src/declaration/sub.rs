@@ -1,9 +1,9 @@
 use pest::iterators::Pair;
-use vcls_ast::{Declaration, Statement, SubroutineDeclaration, Type};
+use vcls_ast::{Statement, SubroutineDeclaration, Type};
 
 use crate::{error::ParseError, statement, ParseResult, Rule};
 
-pub fn handle(pair: Pair<Rule>) -> ParseResult<Declaration> {
+pub fn handle(pair: Pair<Rule>) -> ParseResult<SubroutineDeclaration> {
     debug_assert!(pair.as_rule() == Rule::SubDeclaration);
     let mut inner = pair.into_inner();
     let name = inner
@@ -15,14 +15,14 @@ pub fn handle(pair: Pair<Rule>) -> ParseResult<Declaration> {
     for pair in inner {
         match pair.as_rule() {
             Rule::Type => {
-                typ = Type::from_str(pair.as_str());
+                typ = Type::from_keyword(pair.as_str());
             }
             Rule::SubBody => {
-                return Ok(Declaration::Subroutine(SubroutineDeclaration {
+                return Ok(SubroutineDeclaration {
                     name,
                     return_type: typ,
                     body: handle_sub_body(pair)?,
-                }))
+                })
             }
             Rule::COMMENT => {}
             _ => unreachable!("Unexpected rule: {:?}", pair.as_rule()),

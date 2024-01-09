@@ -1,4 +1,4 @@
-Vcl = _{ SOI ~ Declarations ~ EOI }
+Vcl = _{ SOI ~ Declaration* ~ EOI }
 
 WHITESPACE = _{ " " | "\t" | "\n" | "\r" }
 
@@ -14,8 +14,7 @@ HashComment  = { "#" ~ (!NEWLINE ~ ANY)* ~ NEWLINE }
 BlockComment = { "/*" ~ (!"*/" ~ ANY)* ~ "*/" }
 
 // https://developer.fastly.com/reference/vcl/declarations/
-Declarations = _{ Declaration* }
-Declaration  = _{
+Declaration = {
     IncludeDeclaration
   | ImportDeclaration
   | SubDeclaration
@@ -250,9 +249,9 @@ UnsetStatement =  { ("unset" | "remove") ~ UnsetTarget ~ ";" }
 UnsetTarget    = _{ Variable }
 
 // https://developer.fastly.com/reference/vcl/statements/add/
-AddStatement = { "add" ~ AddTarget ~ "=" ~ AddValue ~ ";" }
-AddTarget    = { Variable }
-AddValue     = { Expr }
+AddStatement =  { "add" ~ AddTarget ~ "=" ~ AddValue ~ ";" }
+AddTarget    = _{ Variable }
+AddValue     = _{ Expr }
 
 // https://developer.fastly.com/reference/vcl/statements/call/
 CallStatement =  { "call" ~ CallTarget ~ ";" }
@@ -276,8 +275,8 @@ EsiStatement = { "esi" ~ ";" }
 IncludeStatement = { IncludeDeclaration }
 
 // https://developer.fastly.com/reference/vcl/statements/log/
-LogStatement = { "log" ~ LogTarget ~ ";" }
-LogTarget    = { Expr }
+LogStatement =  { "log" ~ LogTarget ~ ";" }
+LogTarget    = _{ Expr }
 
 // https://developer.fastly.com/reference/vcl/statements/restart/
 RestartStatement = { "restart" ~ ";" }

@@ -1,9 +1,9 @@
 use pest::iterators::Pair;
-use vcls_ast::{Declaration, TableDeclaration, TableEntry, TableValue, Type, Variable};
+use vcls_ast::{TableDeclaration, TableEntry, TableValue, Type, Variable};
 
 use crate::{error::ParseError, literal, literal::string, utils::skip_comments, ParseResult, Rule};
 
-pub fn handle(pair: Pair<Rule>) -> ParseResult<Declaration> {
+pub fn handle(pair: Pair<Rule>) -> ParseResult<TableDeclaration> {
     let mut inner = skip_comments(pair.into_inner());
     let name = inner
         .next()
@@ -16,12 +16,12 @@ pub fn handle(pair: Pair<Rule>) -> ParseResult<Declaration> {
         message: "Table must have a body".to_string(),
     }])?;
     let typ = if next.as_rule() == Rule::TableType {
-        Type::from_str(next.as_str())
+        Type::from_keyword(next.as_str())
     } else {
         Type::String
     };
     match handle_table_body(next) {
-        Ok(entries) => Ok(Declaration::Table(TableDeclaration { name, typ, entries })),
+        Ok(entries) => Ok(TableDeclaration { name, typ, entries }),
         Err(e) => Err(e),
     }
 }

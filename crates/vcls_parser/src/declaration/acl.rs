@@ -1,11 +1,11 @@
 use std::vec;
 
 use pest::iterators::Pair;
-use vcls_ast::{AclDeclaration, AclEntry, Declaration};
+use vcls_ast::{AclDeclaration, AclEntry};
 
 use crate::{error::ParseError, utils::remove_quotes, ParseResult, Rule};
 
-pub fn handle(pair: Pair<Rule>) -> ParseResult<Declaration> {
+pub fn handle(pair: Pair<Rule>) -> ParseResult<AclDeclaration> {
     let mut errors = vec![];
     let mut inner = pair.into_inner();
     let name = inner
@@ -26,7 +26,7 @@ pub fn handle(pair: Pair<Rule>) -> ParseResult<Declaration> {
         })
         .collect();
     if errors.is_empty() {
-        Ok(Declaration::Acl(AclDeclaration { name, entries }))
+        Ok(AclDeclaration { name, entries })
     } else {
         Err(errors)
     }

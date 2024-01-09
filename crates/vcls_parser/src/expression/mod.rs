@@ -4,7 +4,9 @@ use pest::{
     iterators::Pair,
     pratt_parser::{Assoc, Op, PrattParser},
 };
-use vcls_ast::{BinaryExpression, BinaryOperator, Expression, Literal};
+use vcls_ast::{
+    BinaryExpression, BinaryOperator, Expression, Literal, UnaryExpression, UnaryOperator,
+};
 
 use crate::{literal, variable, ParseResult, Rule};
 
@@ -32,7 +34,15 @@ pub fn handle(pair: Pair<Rule>) -> ParseResult<Expression> {
             Rule::Primary => handle_primary(p),
             _ => unreachable!("Unexpected token: {:?}", p.as_str()),
         })
-        .map_prefix(|p, _rhs| match p.as_rule() {
+        .map_prefix(|p, rhs| match p.as_rule() {
+            Rule::OpNot => Ok(Expression::Unary(UnaryExpression {
+                operator: UnaryOperator::Not,
+                rhs: Box::new(rhs?),
+            })),
+            Rule::OpMinus => Ok(Expression::Unary(UnaryExpression {
+                operator: UnaryOperator::Neg,
+                rhs: Box::new(rhs?),
+            })),
             _ => unimplemented!("Not implemented: {:?}", p.as_rule()),
         })
         .map_infix(|lhs, p, rhs| match p.as_rule() {
@@ -66,15 +76,9 @@ fn handle_primary(pair: Pair<Rule>) -> ParseResult<Expression> {
     let inner = pair.into_inner();
     for pair in inner {
         match pair.as_rule() {
-            Rule::Literal => {
-                return Ok(literal::handle(pair).map(|l| Expression::Literal(l))?);
-            }
-            Rule::Concat => {
-                return handle_concat(pair);
-            }
-            Rule::Expr => {
-                return handle(pair);
-            }
+            Rule::Literal => return literal::handle(pair).map(Expression::Literal),
+            Rule::Concat => return handle_concat(pair),
+            Rule::Expr => return handle(pair),
             _ => unreachable!("Unexpected rule: {:?}", pair.as_rule()),
         }
     }

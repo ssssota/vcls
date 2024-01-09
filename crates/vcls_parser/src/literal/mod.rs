@@ -15,11 +15,11 @@ pub fn handle(pair: Pair<Rule>) -> ParseResult<Literal> {
                 .find(|p| p.as_rule() != Rule::COMMENT)
                 .unwrap(),
         ),
-        Rule::String => string::handle(pair).map(|s| Literal::String(s)),
-        Rule::Object => object::handle(pair).map(|o| Literal::Object(o)),
-        Rule::RTime => rtime::handle(pair).map(|r| Literal::RTime(r)),
+        Rule::String => string::handle(pair).map(Literal::String),
+        Rule::Object => object::handle(pair).map(Literal::Object),
+        Rule::RTime => rtime::handle(pair).map(Literal::RTime),
         Rule::Number => number::handle(pair),
-        Rule::Bool => bool::handle(pair).map(|b| Literal::Bool(b)),
+        Rule::Bool => bool::handle(pair).map(Literal::Bool),
         _ => Err(vec![]),
     }
 }

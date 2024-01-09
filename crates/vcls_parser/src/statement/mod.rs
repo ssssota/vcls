@@ -3,10 +3,13 @@ use vcls_ast::{EsiStatement, RestartStatement, Statement};
 
 use crate::{ParseResult, Rule};
 
+mod add;
 mod call;
 mod declare;
 mod error;
 mod ifs;
+mod include;
+mod log;
 mod ret;
 mod set;
 mod synthetic;
@@ -17,38 +20,20 @@ pub fn handle(pair: Pair<Rule>) -> ParseResult<Statement> {
     let inner = pair.into_inner();
     for pair in inner {
         match pair.as_rule() {
-            Rule::IfStatement => {
-                return Ok(ifs::handle(pair).map(|s| Statement::If(s))?);
-            }
-            Rule::SetStatement => {
-                return Ok(set::handle(pair).map(|s| Statement::Set(s))?);
-            }
-            Rule::UnsetStatement => {
-                return Ok(unset::handle(pair).map(|s| Statement::Unset(s))?);
-            }
-            Rule::AddStatement => {}
-            Rule::CallStatement => {
-                return Ok(call::handle(pair).map(|s| Statement::Call(s))?);
-            }
-            Rule::DeclareStatement => {
-                return Ok(declare::handle(pair).map(|s| Statement::Declare(s))?);
-            }
-            Rule::ErrorStatement => {
-                return Ok(error::handle(pair).map(|s| Statement::Error(s))?);
-            }
-            Rule::EsiStatement => {
-                return Ok(Statement::Esi(EsiStatement));
-            }
-            Rule::IncludeStatement => {}
-            Rule::LogStatement => {}
-            Rule::RestartStatement => {
-                return Ok(Statement::Restart(RestartStatement));
-            }
-            Rule::ReturnStatement => {
-                return Ok(ret::handle(pair).map(|s| Statement::Return(s))?);
-            }
+            Rule::IfStatement => return ifs::handle(pair).map(Statement::If),
+            Rule::SetStatement => return set::handle(pair).map(Statement::Set),
+            Rule::UnsetStatement => return unset::handle(pair).map(Statement::Unset),
+            Rule::AddStatement => return add::handle(pair).map(Statement::Add),
+            Rule::CallStatement => return call::handle(pair).map(Statement::Call),
+            Rule::DeclareStatement => return declare::handle(pair).map(Statement::Declare),
+            Rule::ErrorStatement => return error::handle(pair).map(Statement::Error),
+            Rule::EsiStatement => return Ok(Statement::Esi(EsiStatement)),
+            Rule::IncludeStatement => return include::handle(pair).map(Statement::Include),
+            Rule::LogStatement => return log::handle(pair).map(Statement::Log),
+            Rule::RestartStatement => return Ok(Statement::Restart(RestartStatement)),
+            Rule::ReturnStatement => return ret::handle(pair).map(Statement::Return),
             Rule::SyntheticStatement | Rule::SyntheticBase64Statement => {
-                return Ok(synthetic::handle(pair).map(|s| Statement::Synthetic(s))?)
+                return synthetic::handle(pair).map(Statement::Synthetic)
             }
             Rule::COMMENT => {}
             _ => unreachable!("Unexpected token: {:?}", pair.as_rule()),

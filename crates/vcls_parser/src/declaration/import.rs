@@ -1,9 +1,9 @@
 use pest::iterators::Pair;
-use vcls_ast::{Declaration, ImportDeclaration};
+use vcls_ast::ImportDeclaration;
 
 use crate::{error::ParseError, ParseResult, Rule};
 
-pub fn handle(pair: Pair<Rule>) -> ParseResult<Declaration> {
+pub fn handle(pair: Pair<Rule>) -> ParseResult<ImportDeclaration> {
     let mut inner = pair.into_inner();
     let ident = inner
         .find(|p| p.as_rule() == Rule::Ident)
@@ -12,5 +12,5 @@ pub fn handle(pair: Pair<Rule>) -> ParseResult<Declaration> {
         }])?
         .as_str()
         .to_string();
-    Ok(Declaration::Import(ImportDeclaration { ident }))
+    Ok(ImportDeclaration { ident })
 }

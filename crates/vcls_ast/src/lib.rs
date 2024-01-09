@@ -150,7 +150,7 @@ pub enum Type {
 }
 
 impl Type {
-    pub fn from_str(s: &str) -> Self {
+    pub fn from_keyword(s: &str) -> Self {
         match s {
             "ACL" => Self::Acl,
             "BACKEND" => Self::Backend,
@@ -165,13 +165,6 @@ impl Type {
             "VOID" => Self::Void,
             _ => Self::Unknown(s.to_string()),
         }
-    }
-}
-impl FromStr for Type {
-    type Err = ();
-    #[inline]
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(Self::from_str(s))
     }
 }
 
@@ -363,7 +356,7 @@ pub struct IncludeStatement {
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct LogStatement {
-    pub message: String,
+    pub message: Expression,
 }
 
 #[derive(Debug, PartialEq, Clone)]
