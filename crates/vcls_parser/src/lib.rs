@@ -1,4 +1,3 @@
-use error::ParseError;
 use pest::Parser;
 use vcls_ast::*;
 
@@ -19,7 +18,7 @@ pub type ParseResult<T> = Result<T, Vec<error::ParseError>>;
 pub fn parse(src: &str) -> ParseResult<Vcl> {
     let mut errors = vec![];
     let pairs = VclParser::parse(Rule::Vcl, src).map_err(|e| {
-        vec![ParseError {
+        vec![error::ParseError {
             message: e.to_string(),
         }]
     })?;
