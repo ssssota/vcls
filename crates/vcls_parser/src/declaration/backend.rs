@@ -1,9 +1,10 @@
 use pest::iterators::Pair;
 use vcls_ast::BackendDeclaration;
 
-use crate::{literal::object, ParseResult, Rule};
+use crate::{literal::object, utils::convert_span, ParseResult, Rule};
 
 pub fn handle(pair: Pair<Rule>) -> ParseResult<BackendDeclaration> {
+    let span = convert_span(pair.as_span());
     let mut inner = pair.into_inner();
     let name = inner
         .find(|p| p.as_rule() == Rule::Ident)
@@ -14,5 +15,6 @@ pub fn handle(pair: Pair<Rule>) -> ParseResult<BackendDeclaration> {
     Ok(BackendDeclaration {
         name,
         config: object::handle(obj)?,
+        span,
     })
 }

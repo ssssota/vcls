@@ -5,10 +5,10 @@ use pest::{
     pratt_parser::{Assoc, Op, PrattParser},
 };
 use vcls_ast::{
-    BinaryExpression, BinaryOperator, Expression, Literal, UnaryExpression, UnaryOperator,
+    BinaryExpression, BinaryOperator, Expression, Literal, Span, UnaryExpression, UnaryOperator,
 };
 
-use crate::{literal, variable, ParseResult, Rule};
+use crate::{literal, utils::convert_span, variable, ParseResult, Rule};
 
 pub fn handle(pair: Pair<Rule>) -> ParseResult<Expression> {
     debug_assert!(pair.as_rule() == Rule::Expr);
@@ -34,39 +34,51 @@ pub fn handle(pair: Pair<Rule>) -> ParseResult<Expression> {
             Rule::Primary => handle_primary(p),
             _ => unreachable!("Unexpected token: {:?}", p.as_str()),
         })
-        .map_prefix(|p, rhs| match p.as_rule() {
-            Rule::OpNot => Ok(Expression::Unary(UnaryExpression {
-                operator: UnaryOperator::Not,
-                rhs: Box::new(rhs?),
-            })),
-            Rule::OpMinus => Ok(Expression::Unary(UnaryExpression {
-                operator: UnaryOperator::Neg,
-                rhs: Box::new(rhs?),
-            })),
-            _ => unreachable!("Unexpected token: {:?}", p.as_str()),
+        .map_prefix(|p, rhs| {
+            let span = convert_span(p.as_span());
+            match p.as_rule() {
+                Rule::OpNot => Ok(Expression::Unary(UnaryExpression {
+                    operator: UnaryOperator::Not,
+                    rhs: Box::new(rhs?),
+                    span,
+                })),
+                Rule::OpMinus => Ok(Expression::Unary(UnaryExpression {
+                    operator: UnaryOperator::Neg,
+                    rhs: Box::new(rhs?),
+                    span,
+                })),
+                _ => unreachable!("Unexpected token: {:?}", p.as_str()),
+            }
         })
-        .map_infix(|lhs, p, rhs| match p.as_rule() {
-            Rule::OpEq => Ok(Expression::Binary(BinaryExpression {
-                lhs: Box::new(lhs?),
-                operator: BinaryOperator::Eq,
-                rhs: Box::new(rhs?),
-            })),
-            Rule::OpNe => Ok(Expression::Binary(BinaryExpression {
-                lhs: Box::new(lhs?),
-                operator: BinaryOperator::Ne,
-                rhs: Box::new(rhs?),
-            })),
-            Rule::OpRegexMatch => Ok(Expression::Binary(BinaryExpression {
-                lhs: Box::new(lhs?),
-                operator: BinaryOperator::Tilde,
-                rhs: Box::new(rhs?),
-            })),
-            Rule::OpRegexNotMatch => Ok(Expression::Binary(BinaryExpression {
-                lhs: Box::new(lhs?),
-                operator: BinaryOperator::NotTilde,
-                rhs: Box::new(rhs?),
-            })),
-            _ => unreachable!("Unexpected token: {:?}", p.as_str()),
+        .map_infix(|lhs, p, rhs| {
+            let span = convert_span(p.as_span());
+            match p.as_rule() {
+                Rule::OpEq => Ok(Expression::Binary(BinaryExpression {
+                    lhs: Box::new(lhs?),
+                    operator: BinaryOperator::Eq,
+                    rhs: Box::new(rhs?),
+                    span,
+                })),
+                Rule::OpNe => Ok(Expression::Binary(BinaryExpression {
+                    lhs: Box::new(lhs?),
+                    operator: BinaryOperator::Ne,
+                    rhs: Box::new(rhs?),
+                    span,
+                })),
+                Rule::OpRegexMatch => Ok(Expression::Binary(BinaryExpression {
+                    lhs: Box::new(lhs?),
+                    operator: BinaryOperator::Tilde,
+                    rhs: Box::new(rhs?),
+                    span,
+                })),
+                Rule::OpRegexNotMatch => Ok(Expression::Binary(BinaryExpression {
+                    lhs: Box::new(lhs?),
+                    operator: BinaryOperator::NotTilde,
+                    rhs: Box::new(rhs?),
+                    span,
+                })),
+                _ => unreachable!("Unexpected token: {:?}", p.as_str()),
+            }
         })
         .parse(pair.into_inner())
 }
@@ -86,19 +98,32 @@ fn handle_primary(pair: Pair<Rule>) -> ParseResult<Expression> {
     unreachable!("No primary found")
 }
 
+#[derive(Clone, Debug)]
+struct ConcatEntry {
+    expr: Expression,
+    span: Span,
+}
+
 fn handle_concat(pair: Pair<Rule>) -> ParseResult<Expression> {
     debug_assert!(pair.as_rule() == Rule::Concat);
     let inner = pair.into_inner();
-    let mut tokens = vec![];
+    let mut entries = vec![];
     let mut errors = vec![];
     for pair in inner {
+        let span = convert_span(pair.as_span());
         match pair.as_rule() {
             Rule::String => match literal::string::handle(pair) {
-                Ok(s) => tokens.push(Expression::Literal(Literal::String(s))),
+                Ok(s) => entries.push(ConcatEntry {
+                    expr: Expression::Literal(Literal::String(s)),
+                    span,
+                }),
                 Err(e) => errors.extend(e),
             },
             Rule::Variable => match variable::handle(pair) {
-                Ok(v) => tokens.push(Expression::Variable(v)),
+                Ok(v) => entries.push(ConcatEntry {
+                    expr: Expression::Variable(v),
+                    span,
+                }),
                 Err(e) => errors.extend(e),
             },
             Rule::COMMENT => {}
@@ -106,20 +131,21 @@ fn handle_concat(pair: Pair<Rule>) -> ParseResult<Expression> {
         }
     }
     if errors.is_empty() {
-        Ok(fold_concat(&tokens))
+        Ok(fold_concat(&entries))
     } else {
         Err(errors)
     }
 }
 
-fn fold_concat(tokens: &[Expression]) -> Expression {
+fn fold_concat(tokens: &[ConcatEntry]) -> Expression {
     if tokens.len() == 1 {
-        tokens[0].clone()
+        tokens[0].expr.clone()
     } else {
         Expression::Binary(BinaryExpression {
-            lhs: Box::new(tokens[0].clone()),
+            lhs: Box::new(tokens[0].expr.clone()),
             operator: BinaryOperator::Add,
             rhs: Box::new(fold_concat(&tokens[1..])),
+            span: Span(tokens[0].span.0, tokens[tokens.len() - 1].span.1),
         })
     }
 }

@@ -7,7 +7,8 @@ fn ratecounter() {
         parse("ratecounter test { }").unwrap(),
         Vcl {
             declarations: vec![Declaration::RateCounter(RateCounterDeclaration {
-                name: "test".to_string()
+                name: "test".to_string(),
+                span: Span(0, 20)
             })]
         }
     );

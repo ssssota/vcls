@@ -1,7 +1,7 @@
 use pest::iterators::Pair;
 use vcls_ast::{Statement, SubroutineDeclaration, Type};
 
-use crate::{error::ParseError, statement, ParseResult, Rule};
+use crate::{error::ParseError, statement, utils::convert_span, ParseResult, Rule};
 
 pub fn handle(pair: Pair<Rule>) -> ParseResult<SubroutineDeclaration> {
     debug_assert!(pair.as_rule() == Rule::SubDeclaration);
@@ -13,6 +13,7 @@ pub fn handle(pair: Pair<Rule>) -> ParseResult<SubroutineDeclaration> {
         .to_string();
     let mut typ = Type::Void;
     for pair in inner {
+        let span = convert_span(pair.as_span());
         match pair.as_rule() {
             Rule::Type => {
                 typ = Type::from_keyword(pair.as_str());
@@ -22,6 +23,7 @@ pub fn handle(pair: Pair<Rule>) -> ParseResult<SubroutineDeclaration> {
                     name,
                     return_type: typ,
                     body: handle_sub_body(pair)?,
+                    span,
                 })
             }
             Rule::COMMENT => {}

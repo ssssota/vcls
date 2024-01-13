@@ -1,10 +1,11 @@
 use pest::iterators::Pair;
 use vcls_ast::Variable;
 
-use crate::{ParseResult, Rule};
+use crate::{utils::convert_span, ParseResult, Rule};
 
 pub fn handle(pair: Pair<Rule>) -> ParseResult<Variable> {
     debug_assert!(pair.as_rule() == Rule::Variable);
+    let span = convert_span(pair.as_span());
     let mut inner = pair.into_inner();
     let name = inner
         .find(|p| p.as_rule() == Rule::Ident)
@@ -27,5 +28,6 @@ pub fn handle(pair: Pair<Rule>) -> ParseResult<Variable> {
         name,
         properties,
         sub_field,
+        span,
     })
 }

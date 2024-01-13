@@ -1,7 +1,7 @@
 use pest::iterators::Pair;
 use vcls_ast::{EsiStatement, RestartStatement, Statement};
 
-use crate::{ParseResult, Rule};
+use crate::{utils::convert_span, ParseResult, Rule};
 
 mod add;
 mod call;
@@ -27,10 +27,18 @@ pub fn handle(pair: Pair<Rule>) -> ParseResult<Statement> {
             Rule::CallStatement => return call::handle(pair).map(Statement::Call),
             Rule::DeclareStatement => return declare::handle(pair).map(Statement::Declare),
             Rule::ErrorStatement => return error::handle(pair).map(Statement::Error),
-            Rule::EsiStatement => return Ok(Statement::Esi(EsiStatement)),
+            Rule::EsiStatement => {
+                return Ok(Statement::Esi(EsiStatement {
+                    span: convert_span(pair.as_span()),
+                }))
+            }
             Rule::IncludeStatement => return include::handle(pair).map(Statement::Include),
             Rule::LogStatement => return log::handle(pair).map(Statement::Log),
-            Rule::RestartStatement => return Ok(Statement::Restart(RestartStatement)),
+            Rule::RestartStatement => {
+                return Ok(Statement::Restart(RestartStatement {
+                    span: convert_span(pair.as_span()),
+                }))
+            }
             Rule::ReturnStatement => return ret::handle(pair).map(Statement::Return),
             Rule::SyntheticStatement | Rule::SyntheticBase64Statement => {
                 return synthetic::handle(pair).map(Statement::Synthetic)

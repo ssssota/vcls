@@ -1,22 +1,11 @@
 use std::str::FromStr;
 
-#[derive(Debug, PartialEq, Clone)]
-pub struct Pos(usize, usize);
+#[derive(Debug, PartialEq, Clone, Eq, Hash, Copy)]
+pub struct Span(pub usize, pub usize);
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Vcl {
     pub declarations: Vec<Declaration>,
-}
-
-#[derive(Debug, PartialEq, Clone)]
-pub struct Object {
-    pub entries: Vec<(String, ObjectValue)>,
-}
-
-#[derive(Debug, PartialEq, Clone)]
-pub enum ObjectValue {
-    Literal(Literal),
-    Ident(String),
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -34,16 +23,19 @@ pub enum Declaration {
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct IncludeDeclaration {
+    pub span: Span,
     pub path: String,
 }
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct ImportDeclaration {
+    pub span: Span,
     pub ident: String,
 }
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct SubroutineDeclaration {
+    pub span: Span,
     pub name: String,
     pub return_type: Type,
     pub body: Vec<Statement>,
@@ -51,18 +43,21 @@ pub struct SubroutineDeclaration {
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct AclDeclaration {
+    pub span: Span,
     pub name: String,
     pub entries: Vec<AclEntry>,
 }
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct BackendDeclaration {
+    pub span: Span,
     pub name: String,
     pub config: Object,
 }
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct DirectorDeclaration {
+    pub span: Span,
     pub name: String,
     pub typ: DirectorType,
     pub config: Option<Object>,
@@ -71,16 +66,19 @@ pub struct DirectorDeclaration {
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct PenaltyBoxDeclaration {
+    pub span: Span,
     pub name: String,
 }
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct RateCounterDeclaration {
+    pub span: Span,
     pub name: String,
 }
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct TableDeclaration {
+    pub span: Span,
     pub name: String,
     pub typ: Type,
     pub entries: Vec<TableEntry>,
@@ -88,6 +86,7 @@ pub struct TableDeclaration {
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct TableEntry {
+    pub span: Span,
     pub key: String,
     pub value: TableValue,
 }
@@ -116,6 +115,7 @@ pub enum DirectorType {
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct AclEntry {
+    pub span: Span,
     pub negated: bool,
     pub addr: String,
     pub cidr: u8,
@@ -176,6 +176,18 @@ pub enum Literal {
     Bool(bool),
     RTime(RelativeTime),
     Object(Object),
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct Object {
+    pub entries: Vec<(String, ObjectValue)>,
+    pub span: Span,
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub enum ObjectValue {
+    Literal(Literal),
+    Ident(String),
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
@@ -256,6 +268,7 @@ pub enum Statement {
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct IfStatement {
+    pub span: Span,
     pub condition: Expression,
     pub body: Vec<Statement>,
     pub els: Option<ElseStatement>,
@@ -269,6 +282,7 @@ pub enum ElseStatement {
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct SetStatement {
+    pub span: Span,
     pub target: Variable,
     pub operator: SetOperator,
     pub value: Expression,
@@ -320,55 +334,68 @@ impl FromStr for SetOperator {
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct UnsetStatement {
+    pub span: Span,
     pub target: Variable,
 }
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct AddStatement {
+    pub span: Span,
     pub target: Variable,
     pub value: Expression,
 }
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct CallStatement {
+    pub span: Span,
     pub target: Variable,
 }
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct DeclareStatement {
+    pub span: Span,
     pub target: Variable,
     pub typ: Type,
 }
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct ErrorStatement {
+    pub span: Span,
     pub status: Option<Expression>,
     pub message: Option<Expression>,
 }
 
 #[derive(Debug, PartialEq, Clone)]
-pub struct EsiStatement;
+pub struct EsiStatement {
+    pub span: Span,
+}
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct IncludeStatement {
+    pub span: Span,
     pub path: String,
 }
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct LogStatement {
+    pub span: Span,
     pub message: Expression,
 }
 
 #[derive(Debug, PartialEq, Clone)]
-pub struct RestartStatement;
+pub struct RestartStatement {
+    pub span: Span,
+}
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct ReturnStatement {
+    pub span: Span,
     pub value: Option<Expression>,
 }
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct SyntheticStatement {
+    pub span: Span,
     pub value: Expression,
     pub base64: bool,
 }
@@ -384,6 +411,7 @@ pub enum Expression {
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Variable {
+    pub span: Span,
     pub name: String,
     pub properties: Vec<String>,
     pub sub_field: Option<String>,
@@ -391,6 +419,7 @@ pub struct Variable {
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct BinaryExpression {
+    pub span: Span,
     pub lhs: Box<Expression>,
     pub operator: BinaryOperator,
     pub rhs: Box<Expression>,
@@ -430,6 +459,7 @@ pub enum BinaryOperator {
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct UnaryExpression {
+    pub span: Span,
     pub operator: UnaryOperator,
     pub rhs: Box<Expression>,
 }
@@ -444,6 +474,7 @@ pub enum UnaryOperator {
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct CallExpression {
+    pub span: Span,
     pub target: Variable,
     pub arguments: Vec<Expression>,
 }

@@ -11,6 +11,10 @@ pub fn remove_quotes(s: &str) -> String {
     s[1..s.len() - 1].to_string()
 }
 
+pub fn convert_span(span: pest::Span) -> vcls_ast::Span {
+    vcls_ast::Span(span.start(), span.end())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

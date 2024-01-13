@@ -1,9 +1,17 @@
 use pest::iterators::Pair;
 use vcls_ast::{TableDeclaration, TableEntry, TableValue, Type, Variable};
 
-use crate::{error::ParseError, literal, literal::string, utils::skip_comments, ParseResult, Rule};
+use crate::{
+    error::ParseError,
+    literal,
+    literal::string,
+    utils::{convert_span, skip_comments},
+    ParseResult, Rule,
+};
 
 pub fn handle(pair: Pair<Rule>) -> ParseResult<TableDeclaration> {
+    debug_assert!(pair.as_rule() == Rule::TableDeclaration);
+    let span = convert_span(pair.as_span());
     let mut inner = skip_comments(pair.into_inner());
     let name = inner
         .next()
@@ -21,7 +29,12 @@ pub fn handle(pair: Pair<Rule>) -> ParseResult<TableDeclaration> {
         Type::String
     };
     match handle_table_body(next) {
-        Ok(entries) => Ok(TableDeclaration { name, typ, entries }),
+        Ok(entries) => Ok(TableDeclaration {
+            name,
+            typ,
+            entries,
+            span,
+        }),
         Err(e) => Err(e),
     }
 }
@@ -49,6 +62,7 @@ fn handle_table_body(pair: Pair<Rule>) -> ParseResult<Vec<TableEntry>> {
 
 fn handle_table_entry(pair: Pair<Rule>) -> ParseResult<TableEntry> {
     debug_assert!(pair.as_rule() == Rule::TableEntry);
+    let span = convert_span(pair.as_span());
     let mut inner = pair.into_inner();
     let key = string::handle(
         inner
@@ -78,8 +92,10 @@ fn handle_table_entry(pair: Pair<Rule>) -> ParseResult<TableEntry> {
                 name: value.as_str().to_string(),
                 properties: vec![],
                 sub_field: None,
+                span: convert_span(value.as_span()),
             }),
             _ => unreachable!("Unexpected token: {:?}", value.as_rule()),
         },
+        span,
     })
 }

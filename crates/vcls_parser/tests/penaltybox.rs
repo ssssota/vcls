@@ -7,7 +7,8 @@ fn penaltybox() {
         parse("penaltybox test { }").unwrap(),
         Vcl {
             declarations: vec![Declaration::PenaltyBox(PenaltyBoxDeclaration {
-                name: "test".to_string()
+                name: "test".to_string(),
+                span: Span(0, 19)
             })]
         }
     );

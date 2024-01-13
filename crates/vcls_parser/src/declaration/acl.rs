@@ -1,12 +1,17 @@
 use std::vec;
 
 use pest::iterators::Pair;
-use vcls_ast::{AclDeclaration, AclEntry};
+use vcls_ast::{AclDeclaration, AclEntry, Span};
 
-use crate::{error::ParseError, utils::remove_quotes, ParseResult, Rule};
+use crate::{
+    error::ParseError,
+    utils::{convert_span, remove_quotes},
+    ParseResult, Rule,
+};
 
 pub fn handle(pair: Pair<Rule>) -> ParseResult<AclDeclaration> {
     let mut errors = vec![];
+    let span = convert_span(pair.as_span());
     let mut inner = pair.into_inner();
     let name = inner
         .find(|p| p.as_rule() == Rule::Ident)
@@ -26,7 +31,11 @@ pub fn handle(pair: Pair<Rule>) -> ParseResult<AclDeclaration> {
         })
         .collect();
     if errors.is_empty() {
-        Ok(AclDeclaration { name, entries })
+        Ok(AclDeclaration {
+            name,
+            entries,
+            span,
+        })
     } else {
         Err(errors)
     }
@@ -37,13 +46,15 @@ struct AclEntryBuilder {
     nagated: bool,
     addr: Option<String>,
     cidr: u8,
+    span: Span,
 }
 impl AclEntryBuilder {
-    fn new() -> Self {
+    fn new(span: Span) -> Self {
         Self {
             nagated: false,
             addr: None,
             cidr: 0,
+            span,
         }
     }
     fn negated(&mut self) {
@@ -64,6 +75,7 @@ impl TryInto<AclEntry> for AclEntryBuilder {
                 negated: self.nagated,
                 addr,
                 cidr: self.cidr,
+                span: self.span,
             })
         } else {
             Err(ParseError {
@@ -74,7 +86,7 @@ impl TryInto<AclEntry> for AclEntryBuilder {
 }
 
 fn handle_acl_entry(pair: Pair<Rule>) -> ParseResult<AclEntry> {
-    let mut builder = AclEntryBuilder::new();
+    let mut builder = AclEntryBuilder::new(convert_span(pair.as_span()));
     for pair in pair.into_inner() {
         match pair.as_rule() {
             Rule::AclEntryNegated => builder.negated(),

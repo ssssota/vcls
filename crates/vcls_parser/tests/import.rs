@@ -7,7 +7,8 @@ fn import() {
         parse("import foo;").unwrap(),
         Vcl {
             declarations: vec![Declaration::Import(ImportDeclaration {
-                ident: "foo".to_string()
+                ident: "foo".to_string(),
+                span: Span(0, 11)
             })]
         }
     );

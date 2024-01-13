@@ -4,11 +4,13 @@ use vcls_ast::{Literal, Object, ObjectValue};
 use crate::{
     error::ParseError,
     literal::{bool, number, object, rtime, string},
+    utils::convert_span,
     ParseResult, Rule,
 };
 
 pub fn handle(pair: Pair<Rule>) -> ParseResult<Object> {
     debug_assert!(pair.as_rule() == Rule::Object);
+    let span = convert_span(pair.as_span());
     let inner = pair.into_inner();
     let mut entries = vec![];
     let mut errors = vec![];
@@ -24,7 +26,7 @@ pub fn handle(pair: Pair<Rule>) -> ParseResult<Object> {
         }
     }
     if errors.is_empty() {
-        Ok(Object { entries })
+        Ok(Object { entries, span })
     } else {
         Err(errors)
     }

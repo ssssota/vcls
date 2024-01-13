@@ -1,10 +1,11 @@
 use pest::iterators::Pair;
 use vcls_ast::{ElseStatement, IfStatement, Statement};
 
-use crate::{expression, statement, ParseResult, Rule};
+use crate::{expression, statement, utils::convert_span, ParseResult, Rule};
 
 pub fn handle(pair: Pair<Rule>) -> ParseResult<IfStatement> {
     debug_assert!(pair.as_rule() == Rule::IfStatement || pair.as_rule() == Rule::ElseIf);
+    let span = convert_span(pair.as_span());
     let mut inner = pair.into_inner();
     let condition = expression::handle(inner.find(|p| p.as_rule() == Rule::Expr).unwrap())?;
     let body = handle_body(inner.find(|p| p.as_rule() == Rule::IfBody).unwrap())?;
@@ -16,6 +17,7 @@ pub fn handle(pair: Pair<Rule>) -> ParseResult<IfStatement> {
         condition,
         body,
         els,
+        span,
     })
 }
 
