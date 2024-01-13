@@ -5,7 +5,7 @@ use vcls_parser::parse;
 fn acl() {
     assert_eq!(
         parse(
-            r#"\
+            r#"
 acl office_ip_ranges {
     "localhost";                                 # loopback
     "192.0.2.0"/24;                              # internal office...
