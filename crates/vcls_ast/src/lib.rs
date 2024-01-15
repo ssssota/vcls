@@ -170,12 +170,42 @@ impl Type {
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Literal {
-    String(String),
-    Integer(i64),
-    Float(f64),
-    Bool(bool),
-    RTime(RelativeTime),
+    String(StringLiteral),
+    Integer(IntegerLiteral),
+    Float(FloatLiteral),
+    Bool(BoolLiteral),
+    RTime(RTimeLiteral),
     Object(Object),
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct StringLiteral {
+    pub span: Span,
+    pub value: String,
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct IntegerLiteral {
+    pub span: Span,
+    pub value: i64,
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct FloatLiteral {
+    pub span: Span,
+    pub value: f64,
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct BoolLiteral {
+    pub span: Span,
+    pub value: bool,
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct RTimeLiteral {
+    pub span: Span,
+    pub value: RelativeTime,
 }
 
 #[derive(Debug, PartialEq, Clone)]

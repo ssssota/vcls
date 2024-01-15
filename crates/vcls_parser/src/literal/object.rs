@@ -1,5 +1,5 @@
 use pest::iterators::Pair;
-use vcls_ast::{Literal, Object, ObjectValue};
+use vcls_ast::{BoolLiteral, Literal, Object, ObjectValue, RTimeLiteral, StringLiteral};
 
 use crate::{
     error::ParseError,
@@ -54,12 +54,22 @@ pub fn handle_object_entry(pair: Pair<Rule>) -> ParseResult<(String, ObjectValue
         .ok_or(vec![ParseError {
             message: "Object entry must have a value".to_string(),
         }])?;
+    let span = convert_span(value.as_span());
     let value = match value.as_rule() {
         Rule::Object => ObjectValue::Literal(Literal::Object(object::handle(value)?)),
-        Rule::String => ObjectValue::Literal(Literal::String(string::handle(value)?)),
+        Rule::String => ObjectValue::Literal(Literal::String(StringLiteral {
+            value: string::handle(value)?,
+            span,
+        })),
         Rule::Number => ObjectValue::Literal(number::handle(value)?),
-        Rule::Bool => ObjectValue::Literal(Literal::Bool(bool::handle(value)?)),
-        Rule::RTime => ObjectValue::Literal(Literal::RTime(rtime::handle(value)?)),
+        Rule::Bool => ObjectValue::Literal(Literal::Bool(BoolLiteral {
+            value: bool::handle(value)?,
+            span,
+        })),
+        Rule::RTime => ObjectValue::Literal(Literal::RTime(RTimeLiteral {
+            value: rtime::handle(value)?,
+            span,
+        })),
         Rule::Ident => ObjectValue::Ident(value.as_str().to_string()),
         _ => unreachable!("Unexpected rule: {:?}", value.as_rule()),
     };

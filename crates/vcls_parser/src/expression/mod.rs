@@ -5,7 +5,8 @@ use pest::{
     pratt_parser::{Assoc, Op, PrattParser},
 };
 use vcls_ast::{
-    BinaryExpression, BinaryOperator, Expression, Literal, Span, UnaryExpression, UnaryOperator,
+    BinaryExpression, BinaryOperator, Expression, Literal, Span, StringLiteral, UnaryExpression,
+    UnaryOperator,
 };
 
 use crate::{literal, utils::convert_span, variable, ParseResult, Rule};
@@ -114,7 +115,7 @@ fn handle_concat(pair: Pair<Rule>) -> ParseResult<Expression> {
         match pair.as_rule() {
             Rule::String => match literal::string::handle(pair) {
                 Ok(s) => entries.push(ConcatEntry {
-                    expr: Expression::Literal(Literal::String(s)),
+                    expr: Expression::Literal(Literal::String(StringLiteral { value: s, span })),
                     span,
                 }),
                 Err(e) => errors.extend(e),
