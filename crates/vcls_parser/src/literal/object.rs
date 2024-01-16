@@ -1,5 +1,5 @@
 use pest::iterators::Pair;
-use vcls_ast::{BoolLiteral, Literal, Object, ObjectValue, RTimeLiteral, StringLiteral};
+use vcls_ast::{BoolLiteral, Literal, Object, ObjectValue, RTimeLiteral};
 
 use crate::{
     error::ParseError,
@@ -57,10 +57,7 @@ pub fn handle_object_entry(pair: Pair<Rule>) -> ParseResult<(String, ObjectValue
     let span = convert_span(value.as_span());
     let value = match value.as_rule() {
         Rule::Object => ObjectValue::Literal(Literal::Object(object::handle(value)?)),
-        Rule::String => ObjectValue::Literal(Literal::String(StringLiteral {
-            value: string::handle(value)?,
-            span,
-        })),
+        Rule::String => ObjectValue::Literal(Literal::String(string::handle(value)?)),
         Rule::Number => ObjectValue::Literal(number::handle(value)?),
         Rule::Bool => ObjectValue::Literal(Literal::Bool(BoolLiteral {
             value: bool::handle(value)?,

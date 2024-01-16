@@ -1,5 +1,5 @@
 use pest::iterators::Pair;
-use vcls_ast::{BoolLiteral, Literal, RTimeLiteral, StringLiteral};
+use vcls_ast::{BoolLiteral, Literal, RTimeLiteral};
 
 use crate::{utils::convert_span, ParseResult, Rule};
 pub mod bool;
@@ -16,9 +16,7 @@ pub fn handle(pair: Pair<Rule>) -> ParseResult<Literal> {
                 .find(|p| p.as_rule() != Rule::COMMENT)
                 .unwrap(),
         ),
-        Rule::String => {
-            string::handle(pair).map(|s| Literal::String(StringLiteral { value: s, span }))
-        }
+        Rule::String => string::handle(pair).map(Literal::String),
         Rule::Object => object::handle(pair).map(Literal::Object),
         Rule::RTime => rtime::handle(pair).map(|r| Literal::RTime(RTimeLiteral { value: r, span })),
         Rule::Number => number::handle(pair),

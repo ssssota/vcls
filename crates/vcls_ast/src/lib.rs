@@ -24,7 +24,7 @@ pub enum Declaration {
 #[derive(Debug, PartialEq, Clone)]
 pub struct IncludeDeclaration {
     pub span: Span,
-    pub path: String,
+    pub path: StringToken,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -87,7 +87,7 @@ pub struct TableDeclaration {
 #[derive(Debug, PartialEq, Clone)]
 pub struct TableEntry {
     pub span: Span,
-    pub key: String,
+    pub key: StringLiteral,
     pub value: TableValue,
 }
 
@@ -180,6 +180,12 @@ pub enum Literal {
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct StringLiteral {
+    pub span: Span,
+    pub tokens: Vec<StringToken>,
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct StringToken {
     pub span: Span,
     pub value: String,
 }
@@ -403,7 +409,7 @@ pub struct EsiStatement {
 #[derive(Debug, PartialEq, Clone)]
 pub struct IncludeStatement {
     pub span: Span,
-    pub path: String,
+    pub path: StringToken,
 }
 
 #[derive(Debug, PartialEq, Clone)]

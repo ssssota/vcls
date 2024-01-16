@@ -7,9 +7,12 @@ fn include() {
         parse(r#"include "foo.vcl";"#).unwrap(),
         Vcl {
             declarations: vec![Declaration::Include(IncludeDeclaration {
-                path: "foo.vcl".to_string(),
-                span: Span(0, 18)
-            })]
-        }
+                path: StringToken {
+                    value: "foo.vcl".to_string(),
+                    span: Span(8, 17),
+                },
+                span: Span(0, 18),
+            })],
+        },
     );
 }

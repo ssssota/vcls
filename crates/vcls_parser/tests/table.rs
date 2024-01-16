@@ -26,15 +26,30 @@ table test {
                 typ: Type::String,
                 entries: vec![
                     TableEntry {
-                        key: "foo".to_string(),
+                        key: StringLiteral {
+                            tokens: vec![StringToken {
+                                value: "foo".to_string(),
+                                span: Span(14, 19),
+                            }],
+                            span: Span(14, 19),
+                        },
                         value: TableValue::Literal(Literal::String(StringLiteral {
-                            value: "bar".to_string(),
+                            tokens: vec![StringToken {
+                                value: "bar".to_string(),
+                                span: Span(21, 26),
+                            }],
                             span: Span(21, 26),
                         })),
                         span: Span(14, 26),
                     },
                     TableEntry {
-                        key: "integer".to_string(),
+                        key: StringLiteral {
+                            tokens: vec![StringToken {
+                                value: "integer".to_string(),
+                                span: Span(39, 50),
+                            }],
+                            span: Span(39, 64),
+                        },
                         value: TableValue::Literal(Literal::Integer(IntegerLiteral {
                             value: 1,
                             span: Span(66, 67),
@@ -42,23 +57,47 @@ table test {
                         span: Span(39, 67),
                     },
                     TableEntry {
-                        key: "".to_string(),
+                        key: StringLiteral {
+                            tokens: vec![StringToken {
+                                value: "".to_string(),
+                                span: Span(70, 72),
+                            }],
+                            span: Span(70, 72),
+                        },
                         value: TableValue::Literal(Literal::String(StringLiteral {
-                            value: "empty // key".to_string(),
+                            tokens: vec![StringToken {
+                                value: "empty // key".to_string(),
+                                span: Span(74, 88),
+                            }],
                             span: Span(74, 88),
                         })),
                         span: Span(70, 88),
                     },
                     TableEntry {
-                        key: "/* */\n".to_string(),
+                        key: StringLiteral {
+                            tokens: vec![StringToken {
+                                value: "/* */\n".to_string(),
+                                span: Span(90, 100),
+                            }],
+                            span: Span(90, 100),
+                        },
                         value: TableValue::Literal(Literal::String(StringLiteral {
-                            value: "\n    multiline\n".to_string(),
+                            tokens: vec![StringToken {
+                                value: "\n    multiline\n".to_string(),
+                                span: Span(102, 135),
+                            }],
                             span: Span(102, 135),
                         })),
                         span: Span(90, 135),
                     },
                     TableEntry {
-                        key: "rtime".to_string(),
+                        key: StringLiteral {
+                            tokens: vec![StringToken {
+                                value: "rtime".to_string(),
+                                span: Span(137, 144),
+                            }],
+                            span: Span(137, 154),
+                        },
                         value: TableValue::Literal(Literal::RTime(RTimeLiteral {
                             value: RelativeTime::from_min(1.0),
                             span: Span(156, 158),
@@ -66,7 +105,13 @@ table test {
                         span: Span(137, 158),
                     },
                     TableEntry {
-                        key: "bool".to_string(),
+                        key: StringLiteral {
+                            tokens: vec![StringToken {
+                                value: "bool".to_string(),
+                                span: Span(161, 167),
+                            }],
+                            span: Span(161, 168),
+                        },
                         value: TableValue::Literal(Literal::Bool(BoolLiteral {
                             value: true,
                             span: Span(181, 185),
@@ -74,7 +119,13 @@ table test {
                         span: Span(161, 185),
                     },
                     TableEntry {
-                        key: "backend or acl".to_string(),
+                        key: StringLiteral {
+                            tokens: vec![StringToken {
+                                value: "backend or acl".to_string(),
+                                span: Span(187, 203),
+                            }],
+                            span: Span(187, 204),
+                        },
                         value: TableValue::Ident(Variable {
                             name: "backend_or_acl".to_string(),
                             properties: vec![],
@@ -85,7 +136,7 @@ table test {
                     },
                 ],
                 span: Span(1, 226),
-            })]
-        }
+            })],
+        },
     );
 }

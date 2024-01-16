@@ -30,7 +30,10 @@ fn ret_value() {
                 body: vec![Statement::Return(ReturnStatement {
                     value: Some(Expression::Binary(BinaryExpression {
                         lhs: Box::new(Expression::Literal(Literal::String(StringLiteral {
-                            value: "foo".to_string(),
+                            tokens: vec![StringToken {
+                                value: "foo".to_string(),
+                                span: Span(24, 29),
+                            }],
                             span: Span(24, 30),
                         }))),
                         operator: BinaryOperator::Add,
@@ -68,7 +71,10 @@ fn synthetic() {
                     Statement::Synthetic(SyntheticStatement {
                         base64: true,
                         value: Expression::Literal(Literal::String(StringLiteral {
-                            value: "dGVzdA==".to_string(),
+                            tokens: vec![StringToken {
+                                value: "dGVzdA==".to_string(),
+                                span: Span(49, 59),
+                            }],
                             span: Span(49, 59),
                         })),
                         span: Span(32, 60),
@@ -76,7 +82,10 @@ fn synthetic() {
                     Statement::Synthetic(SyntheticStatement {
                         base64: false,
                         value: Expression::Literal(Literal::String(StringLiteral {
-                            value: "foo".to_string(),
+                            tokens: vec![StringToken {
+                                value: "foo".to_string(),
+                                span: Span(87, 92)
+                            }],
                             span: Span(87, 92)
                         })),
                         span: Span(77, 93),
@@ -113,7 +122,10 @@ fn if_set() {
                         })),
                         operator: BinaryOperator::Eq,
                         rhs: Box::new(Expression::Literal(Literal::String(StringLiteral {
-                            value: "www.example.com".to_string(),
+                            tokens: vec![StringToken {
+                                value: "www.example.com".to_string(),
+                                span: Span(52, 69)
+                            }],
                             span: Span(52, 69)
                         }))),
                         span: Span(49, 51),
@@ -172,7 +184,10 @@ fn if_else() {
                         })),
                         operator: BinaryOperator::Eq,
                         rhs: Box::new(Expression::Literal(Literal::String(StringLiteral {
-                            value: "www.example.com".to_string(),
+                            tokens: vec![StringToken {
+                                value: "www.example.com".to_string(),
+                                span: Span(52, 69),
+                            }],
                             span: Span(52, 69),
                         }))),
                         span: Span(49, 51),
@@ -189,7 +204,10 @@ fn if_else() {
                             })),
                             operator: BinaryOperator::Tilde,
                             rhs: Box::new(Expression::Literal(Literal::String(StringLiteral {
-                                value: ".*\\.example\\.com".to_string(),
+                                tokens: vec![StringToken {
+                                    value: ".*\\.example\\.com".to_string(),
+                                    span: Span(112, 130),
+                                }],
                                 span: Span(112, 130),
                             }))),
                             span: Span(110, 111),
@@ -207,7 +225,10 @@ fn if_else() {
                                 operator: BinaryOperator::Eq,
                                 rhs: Box::new(Expression::Literal(Literal::String(
                                     StringLiteral {
-                                        value: "example.com".to_string(),
+                                        tokens: vec![StringToken {
+                                            value: "example.com".to_string(),
+                                            span: Span(175, 188),
+                                        }],
                                         span: Span(175, 188),
                                     }
                                 ))),
@@ -226,7 +247,10 @@ fn if_else() {
                                     operator: BinaryOperator::NotTilde,
                                     rhs: Box::new(Expression::Literal(Literal::String(
                                         StringLiteral {
-                                            value: "example\\.com".to_string(),
+                                            tokens: vec![StringToken {
+                                                value: "example\\.com".to_string(),
+                                                span: Span(234, 248),
+                                            }],
                                             span: Span(234, 248),
                                         }
                                     ))),
@@ -248,7 +272,10 @@ fn if_else() {
                                         operator: BinaryOperator::Ne,
                                         rhs: Box::new(Expression::Literal(Literal::String(
                                             StringLiteral {
-                                                value: "example.com".to_string(),
+                                                tokens: vec![StringToken {
+                                                    value: "example.com".to_string(),
+                                                    span: Span(295, 308),
+                                                }],
                                                 span: Span(295, 308),
                                             }
                                         ))),
@@ -573,7 +600,10 @@ fn error() {
                             span: Span(84, 87)
                         }))),
                         message: Some(Expression::Literal(Literal::String(StringLiteral {
-                            value: "foo".to_string(),
+                            tokens: vec![StringToken {
+                                value: "foo".to_string(),
+                                span: Span(88, 93)
+                            }],
                             span: Span(88, 93)
                         }))),
                         span: Span(78, 94),
@@ -617,7 +647,10 @@ fn include() {
                 name: "vcl_recv".to_string(),
                 return_type: Type::Void,
                 body: vec![Statement::Include(IncludeStatement {
-                    path: "foo.vcl".to_string(),
+                    path: StringToken {
+                        value: "foo.vcl".to_string(),
+                        span: Span(39, 48),
+                    },
                     span: Span(31, 49),
                 })],
                 span: Span(13, 63),
@@ -641,7 +674,14 @@ fn log() {
                 return_type: Type::Void,
                 body: vec![
                     Statement::Log(LogStatement {
-                        message: Expression::Literal(Literal::String(StringLiteral{value:"foo".to_string(),span:Span(38,43)})),
+                        message: Expression::Literal(Literal::String(
+                            StringLiteral{
+                                tokens: vec![
+                                    StringToken { value: "foo".to_string(), span: Span(38,43) }
+                                ],
+                                span: Span(38,43),
+                            }
+                        )),
                         span: Span(34, 44),
                     }),
                     Statement::Add(AddStatement {
@@ -652,7 +692,7 @@ fn log() {
                             span: Span(65,86),
                         },
                         value: Expression::Literal(Literal::String(StringLiteral {
-                            value: "myCookie=foo; path=/; SameSite=Strict; Secure; max-age=60".to_string(),
+                            tokens: vec![StringToken { value: "myCookie=foo; path=/; SameSite=Strict; Secure; max-age=60".to_string(), span: Span(88, 147),}],
                             span: Span(88, 147),
                         })),
                         span: Span(61,148),
